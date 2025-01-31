@@ -1,7 +1,7 @@
 import { ExerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from "react-native";
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Dimensions } from "react-native";
 
 export default function ExerciseContent({ path }: { path: string }) {
   const [name, setName] = useState("");
@@ -10,24 +10,29 @@ export default function ExerciseContent({ path }: { path: string }) {
   const [restTime, setRestTime] = useState("");
   const [trainingId, setTrainingId] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const exerciseService = new ExerciseService();
 
 const fetchExercises = async () => {
-  try {
-    const data = await exerciseService.findAll();
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await exerciseService.findAll();
 
-    if (!data || data.length === 0) {
-      console.warn("Aucun exercice disponible.");
-      setExercises([]); // Vide les exercices si aucune donnée
-      return;
+      if (!data || data.length === 0) {
+        setExercises([]);
+        setError("Aucun exercice disponible.");
+      } else {
+        setExercises(data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'appel API pour récupérer les exercices :", error);
+      setError("Impossible de récupérer les exercices. Veuillez réessayer plus tard.");
+    } finally {
+      setLoading(false);
     }
-
-    setExercises(data);
-  } catch (error) {
-    console.error("Erreur lors de l'appel API pour récupérer les exercices :", error);
-    alert("Impossible de récupérer les exercices. Veuillez réessayer plus tard.");
-  }
-};
+  };
 
 
   // Fonction pour créer un exercice
@@ -39,7 +44,6 @@ const fetchExercises = async () => {
 
     try {
       const newExercise: Exercise = {
-        id: null, // L'ID sera généré côté serveur
         name,
         set: parseInt(setCount),
         rep: parseInt(repCount),
@@ -53,7 +57,7 @@ const fetchExercises = async () => {
       setRepCount("");
       setRestTime("");
       setTrainingId("");
-      fetchExercises(); // Recharge la liste des exercices
+      fetchExercises();
     } catch (error) {
       console.error("Erreur lors de la création de l'exercice :", error);
     }
@@ -62,9 +66,9 @@ const fetchExercises = async () => {
   // Fonction pour supprimer un exercice
   const deleteExercise = async (id: number) => {
     try {
-      await exerciseService.delete(id); // Appel à votre service
+      await exerciseService.delete(id);
       alert("Exercice supprimé avec succès !");
-      fetchExercises(); // Recharge la liste des exercices
+      fetchExercises(); 
     } catch (error) {
       console.error("Erreur lors de la suppression de l'exercice :", error);
     }
@@ -116,30 +120,33 @@ const fetchExercises = async () => {
 
       <Button title="Créer l'exercice" onPress={createExercise} />
 
-      <Text style={styles.title}>Liste des exercices</Text>
+         <Text style={styles.title}>Liste des exercices</Text>
+
+      {loading && <Text>Chargement des exercices...</Text>}
+      {error && <Text style={styles.error}>{error}</Text>}
+
+      {!loading && !error && exercises.length === 0 && <Text>Aucun exercice disponible.</Text>}
 
       <FlatList
         data={exercises}
-        keyExtractor={(item: Exercise) => item.id?.toString() ?? ""}
+        keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
         renderItem={({ item }) => (
           <View style={styles.exerciseItem}>
             <Text>Nom: {item.name}</Text>
             <Text>Séries: {item.set}</Text>
             <Text>Répétitions: {item.rep}</Text>
             <Text>Repos: {item.restTimeInMinutes} min</Text>
-            <Button
-              title="Supprimer"
-              onPress={() => deleteExercise(item.id!)}
-              color="red"
-            />
+            <Button title="Supprimer" onPress={() => deleteExercise(item.id!)} color="red" />
           </View>
         )}
       />
     </View>
   );
 }
-
+ const screenWidth = Dimensions.get("window").width
+  const screenHeight = Dimensions.get("window").height;
 const styles = StyleSheet.create({
+  
   container: {
     padding: 20,
   },
@@ -161,5 +168,10 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#f9f9f9",
     borderRadius: 5,
+    width: screenWidth * 0.9, // ✅ Calculer 90% dynamiquement
   },
+  error: {
+    color: "red",
+    marginBottom: 10,
+  }
 });
