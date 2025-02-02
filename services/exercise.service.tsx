@@ -1,8 +1,8 @@
 import axios from "axios";
 import { Exercise } from "@/models/exercise.model";
 
-const ngRock_Url = "https://e3de-2001-861-3640-60f0-4171-e2a2-b4cb-173.ngrok-free.app";
-const API_URL = "https://e3de-2001-861-3640-60f0-4171-e2a2-b4cb-173.ngrok-free.app/exercise";
+const API_URL = "https://a74a-2a04-cec0-1075-7526-9984-2df2-fc5a-da6a.ngrok-free.app/exercise";
+
 
 
 export class ExerciseService {

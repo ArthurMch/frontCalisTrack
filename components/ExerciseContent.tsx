@@ -15,24 +15,27 @@ export default function ExerciseContent({ path }: { path: string }) {
   const exerciseService = new ExerciseService();
 
 const fetchExercises = async () => {
+    console.log("fetchExercises() called"); // ✅ Ajout du log pour déboguer
     setLoading(true);
     setError(null);
     try {
-      const data = await exerciseService.findAll();
+        const data = await exerciseService.findAll();
+        console.log("Fetched exercises:", data); // ✅ Voir ce que renvoie l'API
 
-      if (!data || data.length === 0) {
-        setExercises([]);
-        setError("Aucun exercice disponible.");
-      } else {
-        setExercises(data);
-      }
+        if (!data || data.length === 0) {
+            setExercises([]); 
+            setError("Aucun exercice disponible.");
+        } else {
+            setExercises(data);
+        }
     } catch (error) {
-      console.error("Erreur lors de l'appel API pour récupérer les exercices :", error);
-      setError("Impossible de récupérer les exercices. Veuillez réessayer plus tard.");
+        console.error("Erreur lors de la récupération des exercices :", error);
+        setError("Impossible de récupérer les exercices. Veuillez réessayer plus tard.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
 
   // Fonction pour créer un exercice
@@ -44,6 +47,7 @@ const fetchExercises = async () => {
 
     try {
       const newExercise: Exercise = {
+        id: null, 
         name,
         set: parseInt(setCount),
         rep: parseInt(repCount),
