@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Training } from "../../models/training.model";
+import { Training } from "@/models/training.model";
 
 
 const API_URL = "http://localhost:8080/training";

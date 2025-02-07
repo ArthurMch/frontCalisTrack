@@ -1,5 +1,5 @@
 import axios from "axios";
-import { User } from "../../models/user.model";
+import { User } from "@/models/user.model";
 
 
 const API_URL = "http://localhost:8080/user";
@@ -68,7 +68,6 @@ const userService = new UserService();
       lastname: "Doe",
       email: "john.doe@example.com",
       password: "password123",
-      trainings: [],
     });
     console.log("Utilisateur créé :", newUser);
 

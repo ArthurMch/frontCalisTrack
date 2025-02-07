@@ -1,4 +1,4 @@
-import axios, { AxiosHeaders } from "axios";
+import axios from "axios";
 import { Exercise } from "@/models/exercise.model";
 
 const ngRockUrl = "https://0e20-2001-861-3640-60f0-58-a9a3-39-2ce0.ngrok-free.app";
