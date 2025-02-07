@@ -1,7 +1,8 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import { Exercise } from "@/models/exercise.model";
 
-const API_URL = "https://a74a-2a04-cec0-1075-7526-9984-2df2-fc5a-da6a.ngrok-free.app/exercise";
+const ngRockUrl = "https://0e20-2001-861-3640-60f0-58-a9a3-39-2ce0.ngrok-free.app";
+const API_URL = ngRockUrl + "/exercise";
 
 
 
@@ -16,6 +17,7 @@ export class ExerciseService {
     const response = await axios.post<Exercise>(`${API_URL}/`, exercise);
     return response.data;
   }
+
 
   /**
    * Récupère la liste de tous les exercises

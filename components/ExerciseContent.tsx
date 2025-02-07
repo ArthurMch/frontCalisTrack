@@ -1,26 +1,25 @@
 import { ExerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Dimensions } from "react-native";
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Dimensions, ScrollView } from "react-native";
 
 export default function ExerciseContent({ path }: { path: string }) {
   const [name, setName] = useState("");
   const [setCount, setSetCount] = useState("");
   const [repCount, setRepCount] = useState("");
   const [restTime, setRestTime] = useState("");
-  const [trainingId, setTrainingId] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const exerciseService = new ExerciseService();
 
 const fetchExercises = async () => {
-    console.log("fetchExercises() called"); // ✅ Ajout du log pour déboguer
+    console.log("fetchExercises() called");
     setLoading(true);
     setError(null);
     try {
         const data = await exerciseService.findAll();
-        console.log("Fetched exercises:", data); // ✅ Voir ce que renvoie l'API
+        console.log("Fetched exercises:", data); 
 
         if (!data || data.length === 0) {
             setExercises([]); 
@@ -40,7 +39,7 @@ const fetchExercises = async () => {
 
   // Fonction pour créer un exercice
   const createExercise = async () => {
-    if (!name || !setCount || !repCount || !restTime || !trainingId) {
+    if (!name || !setCount || !repCount || !restTime) {
       alert("Tous les champs doivent être remplis !");
       return;
     }
@@ -52,7 +51,6 @@ const fetchExercises = async () => {
         set: parseInt(setCount),
         rep: parseInt(repCount),
         restTimeInMinutes: parseInt(restTime),
-        training: { id: parseInt(trainingId) },
       };
       await exerciseService.create(newExercise); // Appel à votre service
       alert("Exercice créé avec succès !");
@@ -60,7 +58,6 @@ const fetchExercises = async () => {
       setSetCount("");
       setRepCount("");
       setRestTime("");
-      setTrainingId("");
       fetchExercises();
     } catch (error) {
       console.error("Erreur lors de la création de l'exercice :", error);
@@ -84,6 +81,8 @@ const fetchExercises = async () => {
   }, []); // [] signifie que ce useEffect ne s'exécute qu'une seule fois, au montage
 
   return (
+
+  <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}> 
     <View style={styles.container}>
       <Text style={styles.title}>Créer un exercice</Text>
 
@@ -114,21 +113,13 @@ const fetchExercises = async () => {
         keyboardType="numeric"
         onChangeText={setRestTime}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="ID de l'entraînement"
-        value={trainingId}
-        keyboardType="numeric"
-        onChangeText={setTrainingId}
-      />
 
       <Button title="Créer l'exercice" onPress={createExercise} />
 
-         <Text style={styles.title}>Liste des exercices</Text>
+      <Text style={styles.title}>Liste des exercices</Text>
 
       {loading && <Text>Chargement des exercices...</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
-
       {!loading && !error && exercises.length === 0 && <Text>Aucun exercice disponible.</Text>}
 
       <FlatList
@@ -140,11 +131,17 @@ const fetchExercises = async () => {
             <Text>Séries: {item.set}</Text>
             <Text>Répétitions: {item.rep}</Text>
             <Text>Repos: {item.restTimeInMinutes} min</Text>
-            <Button title="Supprimer" onPress={() => deleteExercise(item.id!)} color="red" />
+            <View style={styles.button}>
+              <Button title="Supprimer" onPress={() => deleteExercise(item.id!)} color="red" />
+            </View>
           </View>
         )}
+        keyboardShouldPersistTaps="handled"
       />
     </View>
+  </ScrollView>
+
+
   );
 }
  const screenWidth = Dimensions.get("window").width
@@ -153,11 +150,14 @@ const styles = StyleSheet.create({
   
   container: {
     padding: 20,
+    width: screenWidth * 0.9,
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
     marginVertical: 10,
+    color: "grey",
+    margin: 10,
   },
   input: {
     borderWidth: 1,
@@ -166,6 +166,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
     backgroundColor: "pink",
+  },
+  button: {
+    width: screenWidth * 0.5,
   },
   exerciseItem: {
     marginBottom: 15,

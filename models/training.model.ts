@@ -7,6 +7,5 @@ export interface Training {
   numberOfExercise: number | null;
   totalMinutesOfRest: number | null;
   totalMinutesOfTraining: number | null;
-  exercises: Exercise[];
   trainingUser: User;
 }
