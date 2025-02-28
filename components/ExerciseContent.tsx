@@ -1,7 +1,7 @@
 import { ExerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Dimensions, ScrollView } from "react-native";
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from "react-native";
 
 export default function ExerciseContent({ path }: { path: string }) {
   const [name, setName] = useState("");
@@ -114,7 +114,9 @@ const fetchExercises = async () => {
         onChangeText={setRestTime}
       />
 
-      <Button title="Créer l'exercice" onPress={createExercise} />
+       <TouchableOpacity style={styles.createButton}>
+          <Text style={styles.createButtonText}>Créer l'exercice</Text>
+        </TouchableOpacity>
 
       <Text style={styles.title}>Liste des exercices</Text>
 
@@ -127,13 +129,20 @@ const fetchExercises = async () => {
         keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
         renderItem={({ item }) => (
           <View style={styles.exerciseItem}>
-            <Text>Nom: {item.name}</Text>
-            <Text>Séries: {item.set}</Text>
-            <Text>Répétitions: {item.rep}</Text>
-            <Text>Repos: {item.restTimeInMinutes} min</Text>
-            <View style={styles.button}>
-              <Button title="Supprimer" onPress={() => deleteExercise(item.id!)} color="red" />
+              <View>
+            <Text style={styles.exerciseText}>Nom: {item.name}</Text>
+            <Text style={styles.exerciseText}>Séries: {item.set}</Text>
+            <Text style={styles.exerciseText}>Répétitions: {item.rep}</Text>
+            <Text style={styles.exerciseText}>Repos: {item.restTimeInMinutes} min</Text>
             </View>
+            <View style={styles.buttonContainer}> 
+                <TouchableOpacity style={styles.editButton} >
+                  <Text style={styles.buttonText}>✏️</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => deleteExercise(item.id!)} >
+                  <Text style={styles.buttonText}>🗑</Text>
+                </TouchableOpacity>
+              </View>
           </View>
         )}
         keyboardShouldPersistTaps="handled"
@@ -147,38 +156,79 @@ const fetchExercises = async () => {
  const screenWidth = Dimensions.get("window").width
   const screenHeight = Dimensions.get("window").height;
 const styles = StyleSheet.create({
-  
-  container: {
+   container: {
     padding: 20,
     width: screenWidth * 0.9,
+    alignSelf: "center",
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginVertical: 10,
-    color: "grey",
-    margin: 10,
+    marginBottom: 15,
+    color: "#333",
+    textAlign: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
-    backgroundColor: "pink",
+    borderColor: "#ddd",
+    padding: 12,
+    marginBottom: 15,
+    borderRadius: 8,
+    backgroundColor: "#f5f5f5",
   },
-  button: {
-    width: screenWidth * 0.5,
+  createButton: {
+    backgroundColor: "#007bff",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  createButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   exerciseItem: {
-    marginBottom: 15,
-    padding: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    padding: 15,
     backgroundColor: "#f9f9f9",
-    borderRadius: 5,
-    width: screenWidth * 0.9, // ✅ Calculer 90% dynamiquement
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
   },
-  error: {
+  exerciseText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  editButton: {
+    backgroundColor: "#ffc107",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+  },
+  deleteButton: {
+    backgroundColor: "#dc3545",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+  },
+   error: {
     color: "red",
     marginBottom: 10,
-  }
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
 });

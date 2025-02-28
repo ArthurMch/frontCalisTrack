@@ -54,20 +54,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="heartbeat" color={color} />,
         }}
       />
-      <Tabs.Screen
-      name='statistic'
-      options={{
-        title: 'Statistic',
-        tabBarIcon: ({ color }) => <TabBarIcon name="history" color={color} />,
-      }}
-      />
-      <Tabs.Screen
-      name='creation'
-      options={{
-        title: 'Creation',
-        tabBarIcon: ({ color }) => <TabBarIcon name="plus-circle" color={color} />,
-      }}
-      />
+      
       <Tabs.Screen
       name='profil'
       options={{
