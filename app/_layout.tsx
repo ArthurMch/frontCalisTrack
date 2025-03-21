@@ -3,19 +3,13 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text } from 'react-native';
 import { useColorScheme } from '@/components/useColorScheme';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: 'login', // Start with the login page
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -27,7 +21,6 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -46,13 +39,43 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem('token'); // Check if a token exists
+      setIsAuthenticated(!!token); // Set authentication state
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isAuthenticated === null) {
+    // Show a loading screen while checking authentication
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        {isAuthenticated ? (
+          // If authenticated, show the main app
+          <>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </>
+        ) : (
+          // If not authenticated, show login/register flow
+          <>
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="register" options={{ headerShown: false }} />
+          </>
+        )}
       </Stack>
     </ThemeProvider>
   );
