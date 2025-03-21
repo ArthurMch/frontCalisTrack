@@ -2,7 +2,7 @@ import axios from "axios";
 import { User } from "@/models/user.model";
 
 
-const API_URL = "http://localhost:8080/user";
+const API_URL = "https://999a-2001-861-3640-60f0-5481-6d71-e75b-e7c8.ngrok-free.app/user";
 
 export class UserService {
   /**
