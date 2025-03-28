@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthService } from "@/services/auth.service";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const authService = new AuthService();
 
@@ -14,8 +15,8 @@ export default function LoginPage() {
   const handleLogin = async () => {
     try {
       const token = await authService.login(email, password);
-      localStorage.setItem("token", token); // Save the token
-      router.push("../tabs"); // Navigate to the main app
+      await AsyncStorage.setItem("token", token); // Save the token
+      router.push("/ExerciseScreen"); // Navigate to a valid route
     } catch (err) {
       setError("Invalid email or password");
     }
@@ -62,6 +63,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+    backgroundColor: "#f5f5f5",
   },
   error: {
     color: "red",

@@ -2,7 +2,7 @@ import { View, Text } from "@/components/Themed";
 import { FontAwesome } from "@expo/vector-icons";
 import { StyleSheet } from "react-native";
 
-export default function TabProfilScreen() {
+export default function ProfilScreen() {
     return (
         <View style={styles.container}>
 <FontAwesome name="user-circle" size={50} color="gray" style={styles.icon} />

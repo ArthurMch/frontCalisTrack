@@ -1,8 +1,10 @@
 import axios from "axios";
 import { Training } from "@/models/training.model";
+import { getApiUrl } from "@/app/(tabs)/UrlUtils";
 
 
-const API_URL = "https://999a-2001-861-3640-60f0-5481-6d71-e75b-e7c8.ngrok-free.app/training";
+const ngRockUrl = getApiUrl();
+const API_URL = ngRockUrl + "/training";
 
 export class TrainingService {
 

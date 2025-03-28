@@ -1,15 +1,14 @@
 import { StyleSheet } from 'react-native';
-
-import EditScreenInfo from '@/components/ExerciseContent';
 import { Text, View } from '@/components/Themed';
-import TrainingContent from '@/components/TrainingContent';
+import ExerciseContent from '@/components/ExerciseContent';
 
-export default function TabTrainingScreen() {
+// ceci est le parents de exercise content la page
+// ou je peux importer tous mes modules pour faire mon "screen exercise"
+export default function ExerciseScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Training</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <TrainingContent path="app/(tabs)/index.tsx" />
+      <ExerciseContent path="app/(tabs)/exercise.tsx" />
     </View>
   );
 }

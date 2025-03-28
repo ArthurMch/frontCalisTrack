@@ -1,10 +1,8 @@
 import axios from "axios";
 import { Exercise } from "@/models/exercise.model";
+import { getApiUrl } from "@/app/(tabs)/UrlUtils";
 
-
-
-// Lancer ngrok http 8080 puis copier l'url
-const ngRockUrl = "https://999a-2001-861-3640-60f0-5481-6d71-e75b-e7c8.ngrok-free.app";
+const ngRockUrl = getApiUrl();
 const API_URL = ngRockUrl + "/exercise";
 
 
