@@ -1,6 +1,6 @@
 import axios from "axios";
 import { User } from "@/models/user.model";
-import { getApiUrl } from "@/app/(tabs)/UrlUtils";
+import { getApiUrl } from "@/utils/UrlUtils";
 
 const ngRockUrl = getApiUrl();
 const API_URL = ngRockUrl + "/user";

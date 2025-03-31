@@ -16,7 +16,8 @@ export default function LoginPage() {
     try {
       const token = await authService.login(email, password);
       await AsyncStorage.setItem("token", token); // Save the token
-      router.push("/ExerciseScreen"); // Navigate to a valid route
+      router.push("/(tabs)/exercise"); // Redirect to the main app screen after login
+      
     } catch (err) {
       setError("Invalid email or password");
     }

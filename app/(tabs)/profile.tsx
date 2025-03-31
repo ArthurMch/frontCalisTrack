@@ -2,11 +2,11 @@ import { View, Text } from "@/components/Themed";
 import { FontAwesome } from "@expo/vector-icons";
 import { StyleSheet } from "react-native";
 
-export default function ProfilScreen() {
+export default function ProfileScreen() {
     return (
         <View style={styles.container}>
 <FontAwesome name="user-circle" size={50} color="gray" style={styles.icon} />
-        <Text style={styles.title}>Profil</Text>
+        <Text style={styles.title}>Profile</Text>
         </View>
     )
 }
@@ -28,6 +28,6 @@ const styles = StyleSheet.create({
     width: '80%',
   },
   icon: {
-    marginBottom: 20, // Ajoute un espace entre l'icône et le texte
+    marginBottom: 20,
   },
 });

@@ -1,13 +1,9 @@
 import React from 'react';
+import { Tabs } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
@@ -15,36 +11,21 @@ function TabBarIcon(props: {
   return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
 }
 
-export default function TabLayout() {
+export default function TabsLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        headerShown: true,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Training',
           tabBarIcon: ({ color }) => <TabBarIcon name="check" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
         }}
       />
       <Tabs.Screen
@@ -54,13 +35,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="heartbeat" color={color} />,
         }}
       />
-      
       <Tabs.Screen
-      name='profil'
-      options={{
-        title: 'Profil',
-        tabBarIcon: ({ color }) => <TabBarIcon name="user-circle" color={color} />,
-      }}
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <TabBarIcon name="user-circle" color={color} />,
+        }}
       />
     </Tabs>
   );

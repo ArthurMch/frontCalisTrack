@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Training } from "@/models/training.model";
-import { getApiUrl } from "@/app/(tabs)/UrlUtils";
+import { getApiUrl } from "@/utils/UrlUtils";
 
 
 const ngRockUrl = getApiUrl();

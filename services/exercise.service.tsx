@@ -1,10 +1,10 @@
 import axios from "axios";
 import { Exercise } from "@/models/exercise.model";
-import { getApiUrl } from "@/app/(tabs)/UrlUtils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getApiUrl } from "@/utils/UrlUtils";
 
 const ngRockUrl = getApiUrl();
 const API_URL = ngRockUrl + "/exercise";
-
 
 
 export class ExerciseService {
@@ -15,9 +15,18 @@ export class ExerciseService {
    * @returns L'exercise créé
    */
   async create(exercise: Exercise): Promise<Exercise> {
-    const response = await axios.post<Exercise>(`${API_URL}/`, exercise);
-    return response.data;
-  }
+  const token = await AsyncStorage.getItem("token"); // Récupérer le token
+  const response = await axios.post<Exercise>(
+    `${API_URL}/`,
+    exercise,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`, // Inclure le token dans les en-têtes
+      },
+    }
+  );
+  return response.data;
+}
 
 
   /**
@@ -25,7 +34,12 @@ export class ExerciseService {
    * @returns Liste des exercises
    */
   async findAll(): Promise<Exercise[]> {
-    const response = await axios.get<Exercise[]>(`${API_URL}/`);
+    const token = await AsyncStorage.getItem("token"); // Retrieve the token
+    const response = await axios.get<Exercise[]>(`${API_URL}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`, 
+      },
+    });
     return response.data;
   }
 

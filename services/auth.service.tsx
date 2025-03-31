@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { getApiUrl } from "@/app/(tabs)/UrlUtils";
+import { getApiUrl } from "@/utils/UrlUtils";
+import { User } from "@/models/user.model";
 
 const ngRockUrl = getApiUrl();
 const API_URL = ngRockUrl + "/api/auth";
@@ -17,7 +18,7 @@ export class AuthService {
     await AsyncStorage.removeItem("token"); // Clear the token
   }
 
-  async register(email: string, password: string): Promise<void> {
-    await axios.post(`${API_URL}/register`, { email, password });
+  async register(user: User): Promise<void> {
+    await axios.post(`${API_URL}/register`, user);
   }
 }

@@ -2,23 +2,35 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthService } from "@/services/auth.service";
+import { User } from "@/models/user.model";
 
 const authService = new AuthService();
 
 export default function RegisterPage() {
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  
 
   const handleRegister = async () => {
     try {
-      await authService.register(email, password);
+      if (!firstname || !lastname || !email || !password) {
+        setError("All fields are required");
+        return;
+      } else {
+        const user: User = { id: null, firstname, lastname, email, password };
+        await authService.register(user);
       setSuccess(true);
       setError("");
       router.push("/login"); // Redirect to login after successful registration
-    } catch (err) {
+    }
+      }
+      
+       catch (err) {
       setError("Registration failed");
     }
   };
@@ -26,6 +38,18 @@ export default function RegisterPage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="First Name"
+        value={firstname}
+        onChangeText={setFirstname}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Last Name"
+        value={lastname}
+        onChangeText={setLastname}
+        />
       <TextInput
         style={styles.input}
         placeholder="Email"

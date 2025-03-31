@@ -14,13 +14,10 @@ export default function ExerciseContent({ path }: { path: string }) {
   const exerciseService = new ExerciseService();
 
 const fetchExercises = async () => {
-    console.log("fetchExercises() called");
     setLoading(true);
     setError(null);
     try {
         const data = await exerciseService.findAll();
-        console.log("Fetched exercises:", data); 
-
         if (!data || data.length === 0) {
             setExercises([]); 
             setError("Aucun exercice disponible.");
@@ -82,10 +79,33 @@ const fetchExercises = async () => {
 
   return (
 
-  <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}> 
+  <FlatList
+  data={exercises}
+  keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
+  renderItem={({ item }) => (
+    <View style={styles.exerciseItem}>
+      <View>
+        <Text style={styles.exerciseText}>Nom: {item.name}</Text>
+        <Text style={styles.exerciseText}>Séries: {item.set}</Text>
+        <Text style={styles.exerciseText}>Répétitions: {item.rep}</Text>
+        <Text style={styles.exerciseText}>Repos: {item.restTimeInMinutes} min</Text>
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.editButton}>
+          <Text style={styles.buttonText}>✏️</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => deleteExercise(item.id!)}
+        >
+          <Text style={styles.buttonText}>🗑</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  )}
+  ListHeaderComponent={
     <View style={styles.container}>
       <Text style={styles.title}>Créer un exercice</Text>
-
       <TextInput
         style={styles.input}
         placeholder="Nom de l'exercice"
@@ -113,42 +133,19 @@ const fetchExercises = async () => {
         keyboardType="numeric"
         onChangeText={setRestTime}
       />
-
-       <TouchableOpacity style={styles.createButton}>
-          <Text style={styles.createButtonText}>Créer l'exercice</Text>
-        </TouchableOpacity>
-
+      <TouchableOpacity style={styles.createButton} onPress={createExercise}>
+        <Text style={styles.createButtonText}>Créer l'exercice</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>Liste des exercices</Text>
-
       {loading && <Text>Chargement des exercices...</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
-      {!loading && !error && exercises.length === 0 && <Text>Aucun exercice disponible.</Text>}
-
-      <FlatList
-        data={exercises}
-        keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
-        renderItem={({ item }) => (
-          <View style={styles.exerciseItem}>
-              <View>
-            <Text style={styles.exerciseText}>Nom: {item.name}</Text>
-            <Text style={styles.exerciseText}>Séries: {item.set}</Text>
-            <Text style={styles.exerciseText}>Répétitions: {item.rep}</Text>
-            <Text style={styles.exerciseText}>Repos: {item.restTimeInMinutes} min</Text>
-            </View>
-            <View style={styles.buttonContainer}> 
-                <TouchableOpacity style={styles.editButton} >
-                  <Text style={styles.buttonText}>✏️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => deleteExercise(item.id!)} >
-                  <Text style={styles.buttonText}>🗑</Text>
-                </TouchableOpacity>
-              </View>
-          </View>
-        )}
-        keyboardShouldPersistTaps="handled"
-      />
+      {!loading && !error && exercises.length === 0 && (
+        <Text>Aucun exercice disponible.</Text>
+      )}
     </View>
-  </ScrollView>
+  }
+  keyboardShouldPersistTaps="handled"
+/>
 
 
   );
