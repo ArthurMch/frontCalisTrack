@@ -33,15 +33,32 @@ export class ExerciseService {
    * Récupère la liste de tous les exercises
    * @returns Liste des exercises
    */
-  async findAll(): Promise<Exercise[]> {
-    const token = await AsyncStorage.getItem("token"); // Retrieve the token
+ async findAll(): Promise<Exercise[]> {
+  try {
+    const token = await AsyncStorage.getItem("token");
+    console.log("Token utilisé:", token ? token.substring(0, 10) + "..." : "aucun token");
+    
     const response = await axios.get<Exercise[]>(`${API_URL}/`, {
       headers: {
-        Authorization: `Bearer ${token}`, 
+        Authorization: `Bearer ${token}`,
       },
     });
+    console.log("Réponse API:", response.status);
     return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Erreur axios:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+    } else {
+      console.error("Erreur non-axios:", error);
+    }
+    throw error;
   }
+}
 
     /**
    * Récupère un exercise

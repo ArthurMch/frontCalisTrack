@@ -7,6 +7,7 @@ const ngRockUrl = getApiUrl();
 const API_URL = ngRockUrl + "/api/auth";
 
 export class AuthService {
+  
   async login(email: string, password: string): Promise<string> {
       console.log(API_URL);
     const response = await axios.post(`${API_URL}/login`, { email, password });
@@ -21,4 +22,28 @@ export class AuthService {
   async register(user: User): Promise<void> {
     await axios.post(`${API_URL}/register`, user);
   }
+
+  async validateToken(token: string): Promise<boolean> {
+    try {
+      const response = await axios.post(`${API_URL}/validate-token`, { token });
+      return response.data.isValid;
+    } catch (error) {
+      console.error("Token validation failed:", error);
+      return false;
+    }
+  }
+  async getUserInfo(token: string): Promise<User> {
+    try {
+      const response = await axios.get(`${API_URL}/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data; // Assume the API returns user data
+    } catch (error) {
+      console.error("Failed to fetch user info:", error);
+      throw error;
+    }
+  }
+
 }
