@@ -36,8 +36,6 @@ export class ExerciseService {
  async findAll(): Promise<Exercise[]> {
   try {
     const token = await AsyncStorage.getItem("token");
-    console.log("Token utilisé:", token ? token.substring(0, 10) + "..." : "aucun token");
-    
     const response = await axios.get<Exercise[]>(`${API_URL}/`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -77,7 +75,13 @@ export class ExerciseService {
    * @returns L'exercise mis à jour
    */
   async update(id: number, exercise: Exercise): Promise<Exercise> {
-    const response = await axios.put<Exercise>(`${API_URL}/${id}`, exercise);
+    const token = await AsyncStorage.getItem("token");
+    const response = await axios.put<Exercise>(`${API_URL}/${id}`, exercise , {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+    );
     return response.data;
   }
 
@@ -87,7 +91,12 @@ export class ExerciseService {
    * @returns Un message de confirmation
    */
   async delete(id: number): Promise<string> {
-    const response = await axios.delete<string>(`${API_URL}/${id}`);
+     const token = await AsyncStorage.getItem("token");
+    const response = await axios.delete<string>(`${API_URL}/${id}`,{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   }
 

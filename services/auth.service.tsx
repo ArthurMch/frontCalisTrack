@@ -1,9 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { getApiUrl } from "@/utils/UrlUtils";
 import { User } from "@/models/user.model";
+import { getApiUrl } from "@/utils/UrlUtils";
 
-const ngRockUrl = getApiUrl();
+const ngRockUrl = getApiUrl(); 
 const API_URL = ngRockUrl + "/api/auth";
 
 export class AuthService {

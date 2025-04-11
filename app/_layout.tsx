@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text } from 'react-native'; // Import jwt-decode to decode JWT tokens
+import { View, Text, InteractionManager, ActivityIndicator } from 'react-native'; // Import jwt-decode to decode JWT tokens
 import { useColorScheme } from '@/components/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { getApiUrl } from '@/utils/UrlUtils';
@@ -18,67 +18,70 @@ export default function RootLayout() {
   const authService = new AuthService(); 
 
  useEffect(() => {
-  const checkAuth = async () => {
-    const token = await AsyncStorage.getItem('token');
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem('token');
 
-    if (token) { 
-      const isValid = await validateToken(token);
+      if (token) {
+        const isValid = await validateToken(token);
 
-      if (isValid) {
-        setIsAuthenticated(true);
+        if (isValid) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
       } else {
         setIsAuthenticated(false);
-        router.push('/login');
       }
-    } else {
-      setIsAuthenticated(false);
-      router.push('/login'); 
-    }
-  };
+    };
 
-  checkAuth();
-}, []);
-
+    checkAuth();
+  }, []);
 
   const validateToken = async (token: string): Promise<boolean> => {
     try {
-      const data = await authService.validateToken(token); 
-      return data; 
+      const data = await authService.validateToken(token);
+      return data;
     } catch (error) {
       console.error('Token validation failed:', error);
       return false;
     }
   };
 
+  // On évite de router tant que l'état n’est pas prêt
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated]);
+
   if (isAuthenticated === null) {
-    
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" />
+        <Text>Vérification de l'authentification...</Text>
       </View>
     );
   }
 
   return (
-     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-    <Stack>
-      {isAuthenticated ? (
-        // Authenticated routes with tab navigation
-        <Stack.Screen
-          name="(tabs)"
-           options={{ 
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
+        {isAuthenticated ? (
+          <Stack.Screen
+            name="(tabs)"
+            options={{
               headerShown: false,
-              headerBackVisible: false
+              headerBackVisible: false,
             }}
-        />
-            ) : (
-        // Unauthenticated routes
-        <>
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="register" options={{ headerShown: false }} />
-        </>
-      )}
-    </Stack></ThemeProvider>
+          />
+        ) : (
+          <>
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="register" options={{ headerShown: false }} />
+          </>
+        )}
+      </Stack>
+    </ThemeProvider>
   );
 }
 
