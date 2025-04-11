@@ -1,10 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { User } from "@/models/user.model";
-import { getApiUrl } from "@/utils/UrlUtils";
+import Constants from "expo-constants";
 
-const ngRockUrl = getApiUrl(); 
-const API_URL = ngRockUrl + "/api/auth";
+const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
+const API_URL = LOCALHOST_URL + "/api/auth";
 
 export class AuthService {
   

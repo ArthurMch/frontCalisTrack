@@ -1,10 +1,9 @@
 import axios from "axios";
 import { Training } from "@/models/training.model";
-import { getApiUrl } from "@/utils/UrlUtils";
+import Constants from "expo-constants";
 
-
-const ngRockUrl = getApiUrl();
-const API_URL = ngRockUrl + "/training";
+const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
+const API_URL = LOCALHOST_URL + "/training";
 
 export class TrainingService {
 

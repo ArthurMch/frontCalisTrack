@@ -1,9 +1,9 @@
 import axios from "axios";
 import { User } from "@/models/user.model";
-import { getApiUrl } from "@/utils/UrlUtils";
+import Constants from "expo-constants";
 
-const ngRockUrl = getApiUrl();
-const API_URL = ngRockUrl + "/user";
+const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
+const API_URL = LOCALHOST_URL +  "/user";
 
 export class UserService {
   /**

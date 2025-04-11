@@ -1,10 +1,12 @@
+import "dotenv/config";
+
 export default {
   expo: {
     name: "Calistrack",
     slug: "Calistrack",
     version: "1.0.0",
     extra: {
-      NG_ROK_URL: process.env.NG_ROK_URL,
+      LOCALHOST_URL: process.env.LOCALHOST_URL,
     },
     orientation: "portrait",
     icon: "./assets/images/icon.png",

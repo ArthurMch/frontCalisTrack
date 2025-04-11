@@ -1,10 +1,10 @@
 import axios from "axios";
 import { Exercise } from "@/models/exercise.model";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getApiUrl } from "@/utils/UrlUtils";
+import Constants from "expo-constants";
 
-const ngRockUrl = getApiUrl();
-const API_URL = ngRockUrl + "/exercise";
+const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
+const API_URL = LOCALHOST_URL + "/exercise";
 
 
 export class ExerciseService {
