@@ -1,12 +1,20 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, View } from './Themed';
+import { useRouter } from 'expo-router';
 
 export default function TrainingContent({ path }: { path: string }) {
+
+   const router = useRouter(); 
+   const goToLoginScreen = () => {
+    router.replace('/login');; // Naviguez vers l'écran "Login"
+  };
   return (
     <View>
       <Text>
-        Training content
+         <TouchableOpacity style={styles.buttonStyle}  onPress={goToLoginScreen}>
+          <Text style={styles.buttonText}>Go back to login screen for demo</Text>
+         </TouchableOpacity>
       </Text>
     </View>
   );
@@ -39,5 +47,16 @@ const styles = StyleSheet.create({
   },
   helpLinkText: {
     textAlign: 'center',
+  },
+  buttonStyle: {
+    backgroundColor: "#4a90e2",
+   padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+  color: "white",
+  fontSize: 16,
+  fontWeight: "bold",
   },
 });
