@@ -1,4 +1,6 @@
 import React from 'react';
+import { Dimensions, TouchableOpacity } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 
 interface ButtonProps {
     label: string;
@@ -8,14 +10,31 @@ interface ButtonProps {
 }
 
 const CommunButton: React.FC<ButtonProps> = ({ label, onClick, disabled = false, className = '' }) => {
+    const screenWidth = Dimensions.get("window").width
+      const screenHeight = Dimensions.get("window").height;
+    const styles = StyleSheet.create({
+buttonStyle: {
+    backgroundColor: "#4a90e2",
+   padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    },
+    buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    },
+    });
+    
+
+    const hoverStyle: React.CSSProperties = {
+        backgroundColor: disabled ? '#d3d3d3' : '#0056b3',
+    };
+
     return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className={`px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 ${className}`}
-        >
-            {label}
-        </button>
+        <TouchableOpacity style={styles.buttonStyle} onPress={onClick} disabled={disabled}>
+                <Text style={styles.buttonText}>{label}</Text>
+              </TouchableOpacity>
     );
 };
 

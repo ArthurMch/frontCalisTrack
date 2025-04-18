@@ -1,6 +1,7 @@
 import axios from "axios";
 import { User } from "@/models/user.model";
 import Constants from "expo-constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
 const API_URL = LOCALHOST_URL +  "/user";
@@ -12,7 +13,10 @@ export class UserService {
    * @returns L'utilisateur créé
    */
   async create(user: User): Promise<User> {
-    const response = await axios.post<User>(`${API_URL}/`, user);
+    const token = await AsyncStorage.getItem("token");
+    const response = await axios.post<User>(`${API_URL}/`, user , {
+      headers: {  Authorization: `Bearer ${token}`, },
+    });
     return response.data;
   }
 
@@ -31,7 +35,10 @@ export class UserService {
    * @returns l'utilisateur
    */
   async findById(id: number): Promise<User> {
-    const response = await axios.get<User>(`${API_URL}/${id}`);
+    const token = await AsyncStorage.getItem("token");
+    const response = await axios.get<User>(`${API_URL}/${id}` , {
+      headers: {  Authorization: `Bearer ${token}`, },
+    });
     return response.data;
   }
 
@@ -57,36 +64,3 @@ export class UserService {
   }
 }
 
-// Exemple d'utilisation
-const userService = new UserService();
-
-(async () => {
-  try {
-    // Créer un utilisateur
-    const newUser = await userService.create({
-      id: null,
-      firstname: "John",
-      lastname: "Doe",
-      email: "john.doe@example.com",
-      password: "password123",
-    });
-    console.log("Utilisateur créé :", newUser);
-
-    // Récupérer tous les utilisateurs
-    const users = await userService.findAll();
-    console.log("Liste des utilisateurs :", users);
-
-    // Mettre à jour un utilisateur
-    const updatedUser = await userService.update(newUser.id!, {
-      ...newUser,
-      firstname: "Johnathan",
-    });
-    console.log("Utilisateur mis à jour :", updatedUser);
-
-    // Supprimer un utilisateur
-    const deleteMessage = await userService.delete(updatedUser.id!);
-    console.log("Message de suppression :", deleteMessage);
-  } catch (error) {
-    console.error("Erreur :", error);
-  }
-})();

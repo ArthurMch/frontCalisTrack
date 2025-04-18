@@ -1,3 +1,4 @@
+import ProfileContent from "@/components/ProfileContent";
 import { View, Text } from "@/components/Themed";
 import { FontAwesome } from "@expo/vector-icons";
 import { StyleSheet } from "react-native";
@@ -5,8 +6,7 @@ import { StyleSheet } from "react-native";
 export default function ProfileScreen() {
     return (
         <View style={styles.container}>
-<FontAwesome name="user-circle" size={50} color="gray" style={styles.icon} />
-        <Text style={styles.title}>Profile</Text>
+ <ProfileContent path="components/ProfileContent.tsx" />
         </View>
     )
 }

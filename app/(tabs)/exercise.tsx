@@ -6,10 +6,9 @@ import ExerciseContent from '@/components/ExerciseContent';
 // ou je peux importer tous mes modules pour faire mon "screen exercise"
 export default function ExerciseScreen() {
   return (
-    <View style={styles.container}>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+   
       <ExerciseContent path="components/ExerciseContent.tsx" />
-    </View>
+  
   );
 }
 

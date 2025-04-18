@@ -91,6 +91,7 @@ export class ExerciseService {
    * @returns Un message de confirmation
    */
   async delete(id: number): Promise<string> {
+    console.log('was called')
      const token = await AsyncStorage.getItem("token");
     const response = await axios.delete<string>(`${API_URL}/${id}`,{
       headers: {

@@ -1,7 +1,19 @@
+import React, { useState, useEffect, useRef } from "react";
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  FlatList, 
+  StyleSheet, 
+  Dimensions, 
+  TouchableOpacity,
+  Animated,
+  Easing,
+  Modal
+} from "react-native";
 import { ExerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from "react-native";
+import AppModal from "@/components/AppModal"; // Import du composant modal
 
 export default function ExerciseContent({ path }: { path: string }) {
   const [name, setName] = useState("");
@@ -11,46 +23,80 @@ export default function ExerciseContent({ path }: { path: string }) {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateSectionVisible, setIsCreateSectionVisible] = useState(true);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const exerciseService = new ExerciseService();
+  
+  // État pour les modals
+  const [modal, setModal] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "info" as "info" | "success" | "error"
+  });
+  
+  const [confirmModal, setConfirmModal] = useState({
+    visible: false,
+    exerciseId: null as number | null
+  });
+  
+  // Animation values
+  const animatedHeight = useRef(new Animated.Value(1)).current;
+  const arrowRotation = useRef(new Animated.Value(1)).current;
 
-const fetchExercises = async () => {
+  const fetchExercises = async () => {
     setLoading(true);
     setError(null);
     try {
-        const data = await exerciseService.findAll();
-        if (!data || data.length === 0) {
-            setExercises([]); 
-            setError("Aucun exercice disponible.");
-        } else {
-            setExercises(data);
-        }
+      const data = await exerciseService.findAll();
+      if (!data || data.length === 0) {
+        setExercises([]);
+        setError("Aucun exercice disponible.");
+      } else {
+        setExercises(data);
+      }
     } catch (error) {
-        console.error("Erreur lors de la récupération des exercices :", error);
-        setError("Impossible de récupérer les exercices. Veuillez réessayer plus tard.");
+      console.error("Erreur lors de la récupération des exercices :", error);
+      setError("Impossible de récupérer les exercices. Veuillez réessayer plus tard.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
+  const showModal = (type: 'error' | 'success' | 'info', title: string, message: string) => {
+    setModal({
+      visible: true,
+      title,
+      message,
+      type
+    });
+  };
 
+  const showConfirmModal = (exerciseId: number) => {
+    setConfirmModal({
+      visible: true,
+      exerciseId
+    });
+    closeMenu();
+  };
 
-  // Fonction pour créer un exercice
   const createExercise = async () => {
     if (!name || !setCount || !repCount || !restTime) {
-      alert("Tous les champs doivent être remplis !");
+      showModal('error', 'Erreur', 'Tous les champs doivent être remplis !');
       return;
     }
 
     try {
       const newExercise: Exercise = {
-        id: null, 
+        id: null,
         name,
         set: parseInt(setCount),
         rep: parseInt(repCount),
         restTimeInMinutes: parseInt(restTime),
       };
-      await exerciseService.create(newExercise); // Appel à votre service
-      alert("Exercice créé avec succès !");
+      await exerciseService.create(newExercise);
+      showModal('success', 'Succès', 'Exercice créé avec succès !');
       setName("");
       setSetCount("");
       setRepCount("");
@@ -58,107 +104,296 @@ const fetchExercises = async () => {
       fetchExercises();
     } catch (error) {
       console.error("Erreur lors de la création de l'exercice :", error);
+      showModal('error', 'Erreur', 'Une erreur est survenue lors de la création de l\'exercice.');
     }
   };
 
-  // Fonction pour supprimer un exercice
   const deleteExercise = async (id: number) => {
     try {
       await exerciseService.delete(id);
-      alert("Exercice supprimé avec succès !");
-      fetchExercises(); 
+      showModal('success', 'Succès', 'Exercice supprimé avec succès!');
+      fetchExercises();
     } catch (error) {
       console.error("Erreur lors de la suppression de l'exercice :", error);
+      showModal('error', 'Erreur', 'Une erreur est survenue lors de la suppression de l\'exercice.');
     }
   };
 
-  // Appel de fetchExercises au montage du composant
+  const editExercise = (exerciseId: number) => {
+    // Implémentation future de la modification
+    showModal('info', 'Information', 'Fonctionnalité de modification à venir.');
+    closeMenu();
+  };
+
+  // Toggle animation for the create section
+  const toggleCreateSection = () => {
+    const newVisibility = !isCreateSectionVisible;
+    setIsCreateSectionVisible(newVisibility);
+    
+    // Animate the height
+    Animated.timing(animatedHeight, {
+      toValue: newVisibility ? 1 : 0,
+      duration: 300,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+      useNativeDriver: false,
+    }).start();
+    
+    // Animate the arrow rotation
+    Animated.timing(arrowRotation, {
+      toValue: newVisibility ? 1 : 0,
+      duration: 300,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  // Calculate rotation value for the arrow
+  const rotateArrow = arrowRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
+  // Calculate the height of the animated container
+  const maxHeight = animatedHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 320], // Adjust this value based on your content height
+  });
+
+  const openMenu = (exerciseId: number) => {
+    setSelectedExerciseId(exerciseId);
+    setIsMenuVisible(true);
+  };
+
+  const closeMenu = () => {
+    setIsMenuVisible(false);
+    setSelectedExerciseId(null);
+  };
+
   useEffect(() => {
     fetchExercises();
-  }, []); // [] signifie que ce useEffect ne s'exécute qu'une seule fois, au montage
+  }, []);
 
   return (
-
-  <FlatList
-  data={exercises}
-  keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
-  renderItem={({ item }) => (
-    <View style={styles.exerciseItem}>
-      <View>
-        <Text style={styles.exerciseText}>Nom: {item.name}</Text>
-        <Text style={styles.exerciseText}>Séries: {item.set}</Text>
-        <Text style={styles.exerciseText}>Répétitions: {item.rep}</Text>
-        <Text style={styles.exerciseText}>Repos: {item.restTimeInMinutes} min</Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.editButton}>
-          <Text style={styles.buttonText}>✏️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => deleteExercise(item.id!)}
-        >
-          <Text style={styles.buttonText}>🗑</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  )}
-  ListHeaderComponent={
     <View style={styles.container}>
-      <Text style={styles.title}>Créer un exercice</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nom de l'exercice"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre de séries"
-        value={setCount}
-        keyboardType="numeric"
-        onChangeText={setSetCount}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre de répétitions"
-        value={repCount}
-        keyboardType="numeric"
-        onChangeText={setRepCount}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Temps de repos (en minutes)"
-        value={restTime}
-        keyboardType="numeric"
-        onChangeText={setRestTime}
-      />
-      <TouchableOpacity style={styles.createButton} onPress={createExercise}>
-        <Text style={styles.createButtonText}>Créer l'exercice</Text>
+      {/* Section header with toggle button */}
+      <TouchableOpacity
+        style={styles.sectionHeader}
+        onPress={toggleCreateSection}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.sectionHeaderText}>Créer un exercice</Text>
+        <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
+          <Text style={styles.toggleIcon}>▼</Text>
+        </Animated.View>
       </TouchableOpacity>
-      <Text style={styles.title}>Liste des exercices</Text>
-      {loading && <Text>Chargement des exercices...</Text>}
+
+      {/* Animated container for the create section */}
+      <Animated.View 
+        style={[
+          styles.createSectionContainer,
+          { maxHeight, overflow: 'hidden', opacity: animatedHeight }
+        ]}
+      >
+        <TextInput
+          style={styles.input}
+          placeholder="Nom de l'exercice"
+          value={name}
+          onChangeText={setName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Nombre de séries"
+          value={setCount}
+          keyboardType="numeric"
+          onChangeText={setSetCount}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Nombre de répétitions"
+          value={repCount}
+          keyboardType="numeric"
+          onChangeText={setRepCount}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Temps de repos (en minutes)"
+          value={restTime}
+          keyboardType="numeric"
+          onChangeText={setRestTime}
+        />
+        <TouchableOpacity style={styles.createButton} onPress={createExercise}>
+          <Text style={styles.createButtonText}>Créer l'exercice</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Liste des exercices */}
+      <Text style={styles.sectionTitle}>Liste des exercices</Text>
+      {loading && <Text style={styles.statusText}>Chargement des exercices...</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
       {!loading && !error && exercises.length === 0 && (
-        <Text>Aucun exercice disponible.</Text>
+        <Text style={styles.statusText}>Aucun exercice disponible.</Text>
       )}
+
+      <FlatList
+        data={exercises}
+        keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
+        renderItem={({ item }) => (
+          <View style={styles.exerciseItem}>
+            {/* Image placeholder */}
+            <View style={styles.exerciseContent}>
+              <View style={styles.imageContainer}>
+                <Text style={styles.imagePlaceholder}>IMG</Text>
+              </View>
+              
+              <View style={styles.exerciseInfo}>
+                <Text style={styles.exerciseName}>{item.name}</Text>
+                <View style={styles.exerciseDetails}>
+                  <Text style={styles.exerciseText}>{item.set} séries</Text>
+                  <Text style={styles.exerciseText}>{item.rep} répétitions</Text>
+                  <Text style={styles.exerciseText}>{item.restTimeInMinutes} min de repos</Text>
+                </View>
+              </View>
+              
+              {/* Options menu button */}
+              <TouchableOpacity 
+                style={styles.menuButton}
+                onPress={() => openMenu(item.id!)}
+              >
+                <Text style={styles.menuDots}>⋮</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        contentContainerStyle={styles.listContainer}
+        keyboardShouldPersistTaps="handled"
+      />
+
+      {/* Menu contextuel */}
+      <Modal
+        visible={isMenuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeMenu}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={closeMenu}
+        >
+          <View style={styles.contextMenu}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                if (selectedExerciseId) editExercise(selectedExerciseId);
+              }}
+            >
+              <Text style={styles.menuItemIcon}>✏️</Text>
+              <Text style={styles.menuItemText}>Modifier</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.menuDivider} />
+            
+            <TouchableOpacity 
+              style={[styles.menuItem, styles.deleteMenuItem]}
+              onPress={() => {
+                if (selectedExerciseId) {
+                  showConfirmModal(selectedExerciseId);
+                } 
+              }}
+            >
+              <Text style={styles.menuItemIcon}>🗑️</Text>
+              <Text style={styles.menuItemText}>Supprimer</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Modals utilisant le composant AppModal */}
+      <AppModal
+        visible={modal.visible}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        onClose={() => setModal(prev => ({ ...prev, visible: false }))}
+      />
+
+      {/* Modal de confirmation de suppression */}
+      <AppModal
+        visible={confirmModal.visible}
+        title="Confirmation"
+        message="Êtes-vous sûr de vouloir supprimer cet exercice ?"
+        type="error"
+        onClose={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+        confirmButton={{
+          text: "Supprimer",
+          onPress: () => {
+            if (confirmModal.exerciseId !== null) {
+              deleteExercise(confirmModal.exerciseId);
+              setConfirmModal({ visible: false, exerciseId: null });
+            }
+          }
+        }}
+        cancelButton={{
+          text: "Annuler",
+          onPress: () => setConfirmModal({ visible: false, exerciseId: null })
+        }}
+      />
     </View>
-  }
-  keyboardShouldPersistTaps="handled"
-/>
-
-
   );
 }
- const screenWidth = Dimensions.get("window").width
-  const screenHeight = Dimensions.get("window").height;
+
+const screenWidth = Dimensions.get("window").width;
 const styles = StyleSheet.create({
-   container: {
-    padding: 20,
-    width: screenWidth * 0.9,
+  container: {
+    flex: 1,
+    width: screenWidth * 0.95,
     alignSelf: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 4,
+    padding: 20,
+    margin: 5,
   },
-  title: {
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#4a90e2",
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sectionHeaderText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  toggleIcon: {
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  createSectionContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  sectionTitle: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 15,
@@ -167,65 +402,146 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 12,
+    borderColor: "#e0e0e0",
+    padding: 14,
     marginBottom: 15,
     borderRadius: 8,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f9f9f9",
+    fontSize: 16,
   },
   createButton: {
-    backgroundColor: "#007bff",
-    padding: 12,
+    backgroundColor: "#4a90e2",
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
-    marginBottom: 20,
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   createButtonText: {
-    color: "white",
+    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
+  listContainer: {
+    paddingBottom: 4,
+  },
   exerciseItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-    padding: 15,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
+    marginTop: 8,
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: "#4a90e2",
+    overflow: "hidden",
+  },
+  exerciseContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+  },
+  exerciseInfo: {
+    flex: 1,
+    padding: 16,
+  },
+  exerciseName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  exerciseDetails: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
   exerciseText: {
+    fontSize: 14,
+    color: "#666",
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    marginLeft: 16,
+  },
+  imagePlaceholder: {
+    fontSize: 16,
+    color: "#999",
+    fontWeight: "bold",
+  },
+  menuButton: {
+    padding: 12,
+    position: "absolute",
+    top: 0,
+    right: 0,
+  },
+  menuDots: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#666",
+  },
+  error: {
+    color: "#e74c3c",
+    marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  statusText: {
+    textAlign: "center",
+    color: "#777",
+    marginBottom: 15,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  contextMenu: {
+    width: 200,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+  },
+  menuItemIcon: {
+    fontSize: 18,
+    marginRight: 12,
+  },
+  menuItemText: {
     fontSize: 16,
     color: "#333",
   },
-  buttonContainer: {
-    flexDirection: "row",
-    gap: 10,
+  deleteMenuItem: {
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
-  editButton: {
-    backgroundColor: "#ffc107",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-  },
-  deleteButton: {
-    backgroundColor: "#dc3545",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-  },
-   error: {
-    color: "red",
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "bold",
+  menuDivider: {
+    height: 1,
+    backgroundColor: "#eee",
   },
 });
