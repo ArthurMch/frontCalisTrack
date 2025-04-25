@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthService } from "@/services/auth.service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUserContext } from "@/components/contexts/UserContext";
 
 const authService = new AuthService();
 
@@ -11,11 +12,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { setCurrentUser } = useUserContext(); 
 
   const handleLogin = async () => {
     try {
-      const token = await authService.login(email, password);
-      await AsyncStorage.setItem("token", token); // Save the token
+      const loginRequest = { email, password };
+      const response = await authService.login(loginRequest);
+      const token = response.accessToken;
+      await AsyncStorage.setItem("token", token);
+      setCurrentUser({
+        id: response.id,
+        email: response.email,
+      });
+      
       router.push("/(tabs)/exercise"); // Redirect to the main app screen after login
       
     } catch (err) {
@@ -42,6 +51,9 @@ export default function LoginPage() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button title="Login" onPress={handleLogin} />
       <Button title="Register" onPress={() => router.push("/register")} />
+      <TouchableOpacity onPress={() => router.push("/lostPassword")}>
+        <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -66,8 +78,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "#f5f5f5",
   },
-  error: {
+ error: {
     color: "red",
     marginBottom: 10,
+  },
+  forgotPassword: {
+    marginTop: 15,
+    color: "#007bff",
+    textAlign: "center",
   },
 });

@@ -1,6 +1,6 @@
 import { User } from "@/models/user.model";
 import { UserService } from "@/services/user.service";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { 
   View, 
   Text, 
@@ -14,11 +14,13 @@ import {
   Image
 } from "react-native";
 import CommunButton from "./CommunButton";
+import { useUserContext } from "./contexts/UserContext";
 
 export default function ProfileContent({ path }: { path: string }) {
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [user, setUser] = useState<User | null>(null);
@@ -28,13 +30,21 @@ export default function ProfileContent({ path }: { path: string }) {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const userService = new UserService();
+  const { currentUser } = useUserContext();
+  
 
   // Fonction pour récupérer l'utilisateur
   const fetchUser = async () => {
+    
+     if (!currentUser) {
+      console.error("Aucun utilisateur connecté.");
+      return;
+    }
+console.log(currentUser.id)
     setLoading(true);
     setError(null);
     try {
-      const data = await userService.findById(52); // Remplacez par l'ID de l'utilisateur connecté
+      const data = await userService.findById(currentUser.id); // Remplacez par l'ID de l'utilisateur connecté
       if (!data) {
         setUser(null);
         setError("Aucun utilisateur trouvé.");
@@ -42,6 +52,7 @@ export default function ProfileContent({ path }: { path: string }) {
         setUser(data);
         setFirstname(data.firstname);
         setLastname(data.lastname);
+        setPhone(data.phone);
         setEmail(data.email);
       }
     } catch (error) {
@@ -58,7 +69,7 @@ export default function ProfileContent({ path }: { path: string }) {
 
   // Fonction pour valider le formulaire
   const validateForm = () => {
-    if (!firstname || !lastname || !email) {
+    if (!firstname || !lastname || !email || !phone) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires.");
       return false;
     }
@@ -99,6 +110,7 @@ export default function ProfileContent({ path }: { path: string }) {
         id: user?.id ?? null,
         firstname: firstname,
         lastname: lastname,
+        phone: phone,
         email,
         password: password, // N'envoie le mot de passe que s'il est renseigné
       };
@@ -208,6 +220,16 @@ export default function ProfileContent({ path }: { path: string }) {
                   placeholder="Votre nom"
                   value={lastname}
                   onChangeText={setLastname}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Téléphone</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Votre téléphone"
+                  value={user.phone}
+                  editable={false} // Rendre le champ non modifiable
                 />
               </View>
 
@@ -437,3 +459,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+function jwtDecode(token: string | null): { id: number; } {
+  throw new Error("Function not implemented.");
+}

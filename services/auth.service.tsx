@@ -2,15 +2,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { User } from "@/models/user.model";
 import Constants from "expo-constants";
+import { LoginRequest } from "@/models/auth/LoginRequest";
+import { JwtResponse } from "@/models/auth/JwtResponse";
 
 const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
 const API_URL = LOCALHOST_URL + "/api/auth";
 
 export class AuthService {
   
-  async login(email: string, password: string): Promise<string> {
+  async login(loginRequest: LoginRequest): Promise<JwtResponse> {
       console.log(API_URL);
-    const response = await axios.post(`${API_URL}/login`, { email, password });
+    const response = await axios.post(`${API_URL}/login`,loginRequest);
   
     return response.data; // This will be the JWT token
   }
@@ -46,4 +48,31 @@ export class AuthService {
     }
   }
 
+ async lostPassword(email: string): Promise<void> {
+    try {
+      await axios.post(`${API_URL}/lost-password`, { email });
+    }
+    catch (error) {
+      console.error("Failed to send reset password email:", error);
+      throw error;
+    }
+  }
+
+  async isValidLostPassword(token: string): Promise<void> {
+    try {
+      await axios.post(`${API_URL}/is-valid-lost-password`, { token });
+    } catch (error) {
+      console.error("Invalid token:", error);
+      throw error;
+    }
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+      try {
+        await axios.post(`${API_URL}/reset-password`, { token, password });
+      } catch (error) {
+        console.error("Failed to send reset password email:", error);
+        throw error;
+      }
+  }
 }

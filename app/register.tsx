@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -18,11 +19,11 @@ export default function RegisterPage() {
 
   const handleRegister = async () => {
     try {
-      if (!firstname || !lastname || !email || !password) {
+      if (!firstname || !lastname || !email || !password || !phone) {
         setError("All fields are required");
         return;
       } else {
-        const user: User = { id: null, firstname, lastname, email, password };
+        const user: User = { id: null, firstname, lastname, email, phone, password };
         await authService.register(user);
       setSuccess(true);
       setError("");
@@ -56,6 +57,12 @@ export default function RegisterPage() {
         value={email}
         onChangeText={setEmail}
       />
+      <TextInput
+        style={styles.input}
+        placeholder="Phone"
+        value={phone}
+        onChangeText={setPhone}
+        />
       <TextInput
         style={styles.input}
         placeholder="Password"

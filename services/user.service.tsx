@@ -49,7 +49,10 @@ export class UserService {
    * @returns L'utilisateur mis à jour
    */
   async update(id: number, user: User): Promise<User> {
-    const response = await axios.put<User>(`${API_URL}/${id}`, user);
+    const token = await AsyncStorage.getItem("token");
+    const response = await axios.put<User>(`${API_URL}/${id}`, user, {
+      headers: {  Authorization: `Bearer ${token}`, },
+    });
     return response.data;
   }
 
