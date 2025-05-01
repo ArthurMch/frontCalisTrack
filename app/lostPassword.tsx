@@ -32,7 +32,7 @@ export default function LostPasswordPage() {
       
       // Optionnel : rediriger après quelques secondes
       setTimeout(() => {
-        router.push('/');
+        router.push('/login');
       }, 3000);
       
     } catch (error) {

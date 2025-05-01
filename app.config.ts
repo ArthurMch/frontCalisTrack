@@ -8,6 +8,9 @@ export default {
     extra: {
       LOCALHOST_URL: process.env.LOCALHOST_URL,
     },
+    packagerOpts: {
+      sourceExts: ["js", "jsx", "ts", "tsx", "json"],
+    },
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "myapp",

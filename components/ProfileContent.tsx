@@ -35,20 +35,20 @@ export default function ProfileContent({ path }: { path: string }) {
 
   // Fonction pour récupérer l'utilisateur
   const fetchUser = async () => {
-    
-     if (!currentUser) {
+     if (!currentUser || currentUser == null) {
       console.error("Aucun utilisateur connecté.");
       return;
     }
-console.log(currentUser.id)
     setLoading(true);
     setError(null);
     try {
-      const data = await userService.findById(currentUser.id); // Remplacez par l'ID de l'utilisateur connecté
+      const data: User = await userService.findById(currentUser.id);
+    
       if (!data) {
         setUser(null);
         setError("Aucun utilisateur trouvé.");
       } else {
+        console.log("Utilisateur récupéré :", data);
         setUser(data);
         setFirstname(data.firstname);
         setLastname(data.lastname);
@@ -60,12 +60,15 @@ console.log(currentUser.id)
       setError("Impossible de récupérer l'utilisateur. Veuillez réessayer plus tard.");
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   useEffect(() => {
-    fetchUser(); // Appel initial pour récupérer l'utilisateur
-  }, []);
+  if (currentUser) {
+    fetchUser();
+  }
+  }, [currentUser]); // 🔁 Déclenche fetchUser dès que currentUser est dispo
+
 
   // Fonction pour valider le formulaire
   const validateForm = () => {
@@ -459,7 +462,3 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-
-function jwtDecode(token: string | null): { id: number; } {
-  throw new Error("Function not implemented.");
-}

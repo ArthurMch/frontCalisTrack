@@ -1,7 +1,7 @@
 import axios from "axios";
 import { User } from "@/models/user.model";
-import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
 const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
 const API_URL = LOCALHOST_URL +  "/user";

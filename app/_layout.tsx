@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, InteractionManager, ActivityIndicator } from 'react-native'; // Import jwt-decode to decode JWT tokens
 import { useColorScheme } from '@/components/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { getApiUrl } from '@/utils/UrlUtils';
 import { AuthService } from '@/services/auth.service';
 import { UserProvider } from '@/components/contexts/UserContext';
 
@@ -18,7 +17,7 @@ export default function RootLayout() {
   const router = useRouter(); 
   const authService = new AuthService(); 
   const pathname = usePathname();
-    const publicPaths = ['/register', '/reset-password', '/forgot-password'];
+    const publicPaths = ['/register', '/reset-password', '/forgot-password', '/login', '/lostPassword', '/validate-email', '/validate-token', '/validate-reset-password'];
 
  useEffect(() => {
     const checkAuth = async () => {

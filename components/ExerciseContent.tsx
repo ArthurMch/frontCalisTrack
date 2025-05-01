@@ -156,7 +156,7 @@ export default function ExerciseContent({ path }: { path: string }) {
   // Calculate the height of the animated container
   const maxHeight = animatedHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 320], // Adjust this value based on your content height
+    outputRange: [0, 370], // Ajusté pour inclure le bouton
   });
 
   const openMenu = (exerciseId: number) => {
@@ -175,57 +175,6 @@ export default function ExerciseContent({ path }: { path: string }) {
 
   return (
     <View style={styles.container}>
-      {/* Section header with toggle button */}
-      <TouchableOpacity
-        style={styles.sectionHeader}
-        onPress={toggleCreateSection}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.sectionHeaderText}>Créer un exercice</Text>
-        <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
-          <Text style={styles.toggleIcon}>▼</Text>
-        </Animated.View>
-      </TouchableOpacity>
-
-      {/* Animated container for the create section */}
-      <Animated.View 
-        style={[
-          styles.createSectionContainer,
-          { maxHeight, overflow: 'hidden', opacity: animatedHeight }
-        ]}
-      >
-        <TextInput
-          style={styles.input}
-          placeholder="Nom de l'exercice"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre de séries"
-          value={setCount}
-          keyboardType="numeric"
-          onChangeText={setSetCount}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre de répétitions"
-          value={repCount}
-          keyboardType="numeric"
-          onChangeText={setRepCount}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Temps de repos (en minutes)"
-          value={restTime}
-          keyboardType="numeric"
-          onChangeText={setRestTime}
-        />
-        <TouchableOpacity style={styles.createButton} onPress={createExercise}>
-          <Text style={styles.createButtonText}>Créer l'exercice</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
       {/* Liste des exercices */}
       <Text style={styles.sectionTitle}>Liste des exercices</Text>
       {loading && <Text style={styles.statusText}>Chargement des exercices...</Text>}
@@ -267,6 +216,66 @@ export default function ExerciseContent({ path }: { path: string }) {
         contentContainerStyle={styles.listContainer}
         keyboardShouldPersistTaps="handled"
       />
+
+      {/* Section header with toggle button */}
+      <TouchableOpacity
+        style={[
+          styles.sectionHeader,
+          {
+            borderBottomLeftRadius: isCreateSectionVisible ? 0 : 10,
+            borderBottomRightRadius: isCreateSectionVisible ? 0 : 10,
+          }
+        ]}
+        onPress={toggleCreateSection}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.sectionHeaderText}>Créer un exercice</Text>
+        <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
+          <Text style={styles.toggleIcon}>▲</Text>
+        </Animated.View>
+      </TouchableOpacity>
+
+      {/* Animated container for the create section */}
+      <Animated.View 
+        style={[
+          styles.createSectionContainer,
+          { height: maxHeight, overflow: 'hidden', opacity: animatedHeight }
+        ]}
+      >
+        {/* Contenu du formulaire dans une View imbriquée pour garantir l'affichage même à height 0 */}
+        <View style={styles.formInnerContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Nom de l'exercice"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre de séries"
+            value={setCount}
+            keyboardType="numeric"
+            onChangeText={setSetCount}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre de répétitions"
+            value={repCount}
+            keyboardType="numeric"
+            onChangeText={setRepCount}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Temps de repos (en minutes)"
+            value={restTime}
+            keyboardType="numeric"
+            onChangeText={setRestTime}
+          />
+          <TouchableOpacity style={styles.createButton} onPress={createExercise}>
+            <Text style={styles.createButtonText}>Créer l'exercice</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
 
       {/* Menu contextuel */}
       <Modal
@@ -355,7 +364,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
     elevation: 4,
-    padding: 20,
+    padding: 14, 
     margin: 5,
   },
   sectionHeader: {
@@ -365,7 +374,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#4a90e2",
     padding: 16,
     borderRadius: 10,
-    marginBottom: 15,
+    marginBottom: 0, // Supprimé l'espace entre le header et le contenu
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -383,15 +392,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   createSectionContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 20,
+    backgroundColor: "#4a90e2",
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    marginBottom: 15, // Marge appliquée au conteneur extérieur plutôt qu'au header
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+  },
+  formInnerContainer: {
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 22,
@@ -410,7 +422,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   createButton: {
-    backgroundColor: "#4a90e2",
+    backgroundColor: "#2971cc", // Légèrement plus foncé que le fond pour se distinguer
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
