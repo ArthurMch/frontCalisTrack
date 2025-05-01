@@ -41,7 +41,6 @@ export default function ExerciseContent({ path }: { path: string }) {
     exerciseId: null as number | null
   });
   
-  // Animation values
   const animatedHeight = useRef(new Animated.Value(1)).current;
   const arrowRotation = useRef(new Animated.Value(1)).current;
 

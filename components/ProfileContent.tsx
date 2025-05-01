@@ -1,6 +1,6 @@
 import { User } from "@/models/user.model";
 import { UserService } from "@/services/user.service";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   View, 
   Text, 
@@ -10,9 +10,9 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
-  Image
+  Alert
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import CommunButton from "./CommunButton";
 import { useUserContext } from "./contexts/UserContext";
 
@@ -28,11 +28,11 @@ export default function ProfileContent({ path }: { path: string }) {
   const [error, setError] = useState<string | null>(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
   const userService = new UserService();
   const { currentUser } = useUserContext();
   
-
   // Fonction pour récupérer l'utilisateur
   const fetchUser = async () => {
      if (!currentUser || currentUser == null) {
@@ -64,14 +64,13 @@ export default function ProfileContent({ path }: { path: string }) {
   };
 
   useEffect(() => {
-  if (currentUser) {
-    fetchUser();
-  }
-  }, [currentUser]); // 🔁 Déclenche fetchUser dès que currentUser est dispo
+    if (currentUser) {
+      fetchUser();
+    }
+  }, [currentUser]); // Déclenche fetchUser dès que currentUser est dispo
 
-
-  // Fonction pour valider le formulaire
-  const validateForm = () => {
+  // Fonction pour valider le formulaire de profil
+  const validateProfileForm = () => {
     if (!firstname || !lastname || !email || !phone) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires.");
       return false;
@@ -84,56 +83,147 @@ export default function ProfileContent({ path }: { path: string }) {
       return false;
     }
 
+    return true;
+  };
+
+  // Fonction pour valider le formulaire de mot de passe
+  const validatePasswordForm = () => {
     // Vérification si les mots de passe correspondent
-    if ((password || confirmPassword) && password !== confirmPassword) {
+    if (!password || !confirmPassword) {
+      Alert.alert("Erreur", "Veuillez remplir les deux champs de mot de passe.");
+      return false;
+    }
+
+    if (password !== confirmPassword) {
       Alert.alert("Erreur", "Les mots de passe ne correspondent pas.");
       return false;
     }
 
-    // Vérification de la complexité du mot de passe si modifié
-    if (password) {
-      if (password.length < 8) {
-        Alert.alert("Erreur", "Le mot de passe doit contenir au moins 8 caractères.");
-        return false;
-      }
+    // Vérification de la complexité du mot de passe selon le pattern requis
+    // Pattern: au moins 10 caractères, au moins 1 chiffre, 1 minuscule, 1 majuscule et 1 caractère spécial
+    const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!.,;+:§£¤%*=|`\\#?&(){}\[\]~\/^_-]).{10,}$/;
+    
+    if (!passwordPattern.test(password)) {
+      Alert.alert(
+        "Erreur", 
+        "Le mot de passe doit contenir au moins 10 caractères, incluant au moins:\n" +
+        "- Une lettre majuscule\n" +
+        "- Une lettre minuscule\n" +
+        "- Un chiffre\n" +
+        "- Un caractère spécial (@$!.,;+:§£¤%*=|`#?&(){}/^_-...)"
+      );
+      return false;
     }
 
     return true;
   };
 
-  // Fonction pour mettre à jour l'utilisateur
-  const updateUser = async () => {
-    if (!validateForm()) {
+  // Fonction pour mettre à jour les informations du profil
+  const updateProfile = async () => {
+    if (!validateProfileForm()) {
       return;
     }
 
-    setIsSaving(true);
+    setIsSavingProfile(true);
     try {
-      const updatedUser: User = {
-        id: user?.id ?? null,
-        firstname: firstname,
-        lastname: lastname,
-        phone: phone,
-        email,
-        password: password, // N'envoie le mot de passe que s'il est renseigné
+      // Préparer les données pour la requête
+      const profileUpdatePayload = {
+        firstname,
+        lastname,
+        phone,
+        email
       };
-      await userService.update(user?.id!, updatedUser);
-      Alert.alert(
-        "Succès", 
-        "Votre profil a été mis à jour avec succès !",
-        [{ text: "OK" }]
-      );
-      setPassword("");
-      setConfirmPassword("");
-      fetchUser();
+
+      // Appeler l'API pour mettre à jour le profil
+      const response = await userService.updateProfile(profileUpdatePayload);
+
+      if (response.success) {
+        Alert.alert(
+          "Succès",
+          "Vos informations personnelles ont été mises à jour avec succès !",
+          [{ text: "OK" }]
+        );
+
+        // Si un nouveau token est retourné, mettez-le à jour dans AsyncStorage
+        if (response.accessToken) {
+          await AsyncStorage.setItem("token", response.accessToken);
+        }
+
+        // Recharger les informations utilisateur
+        fetchUser();
+      } else {
+        Alert.alert(
+          "Erreur",
+          "Une erreur est survenue lors de la mise à jour du profil."
+        );
+      }
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'utilisateur :", error);
       Alert.alert(
-        "Erreur", 
+        "Erreur",
         "Une erreur est survenue lors de la mise à jour du profil."
       );
     } finally {
-      setIsSaving(false);
+      setIsSavingProfile(false);
+    }
+  };
+
+  // Fonction pour mettre à jour le mot de passe
+  const updatePassword = async () => {
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      // Préparer les données pour la requête
+      const passwordUpdatePayload = {
+        password
+      };
+
+      // Appeler l'API pour mettre à jour le mot de passe
+      const response = await userService.updatePassword(passwordUpdatePayload);
+
+      // Gestion des différents statuts de réponse
+      if (response.status === 'DONE') {
+        Alert.alert(
+          "Succès",
+          "Votre mot de passe a été mis à jour avec succès !",
+          [{ text: "OK" }]
+        );
+
+        // Si un nouveau token est retourné, mettez-le à jour dans AsyncStorage
+        if (response.accessToken) {
+          await AsyncStorage.setItem("token", response.accessToken);
+        }
+
+        // Réinitialiser les champs de mot de passe
+        setPassword("");
+        setConfirmPassword("");
+      } else if (response.status === 'INCORRECT') {
+        Alert.alert(
+          "Format incorrect",
+          "Le mot de passe ne respecte pas les critères de sécurité requis."
+        );
+      } else if (response.status === 'ALREADY') {
+        Alert.alert(
+          "Erreur",
+          "Ce mot de passe a déjà été utilisé récemment. Veuillez en choisir un nouveau."
+        );
+      } else {
+        Alert.alert(
+          "Erreur",
+          "Une erreur est survenue lors de la mise à jour du mot de passe."
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du mot de passe :", error);
+      Alert.alert(
+        "Erreur",
+        "Une erreur est survenue lors de la mise à jour du mot de passe."
+      );
+    } finally {
+      setIsSavingPassword(false);
     }
   };
 
@@ -154,7 +244,7 @@ export default function ProfileContent({ path }: { path: string }) {
     if (!user) {
       return;
     }
-    setIsSaving(true);
+    setIsSavingProfile(true);
     try {
       await userService.delete(user.id!);
       Alert.alert(
@@ -170,7 +260,7 @@ export default function ProfileContent({ path }: { path: string }) {
         "Une erreur est survenue lors de la suppression du compte."
       );
     } finally {
-      setIsSaving(false);
+      setIsSavingProfile(false);
     }
   };
 
@@ -204,6 +294,7 @@ export default function ProfileContent({ path }: { path: string }) {
           </View>
         ) : user ? (
           <View style={styles.formContainer}>
+            {/* Section Informations personnelles */}
             <View style={styles.formSection}>
               <Text style={styles.sectionTitle}>Informations personnelles</Text>
               <View style={styles.inputGroup}>
@@ -231,8 +322,9 @@ export default function ProfileContent({ path }: { path: string }) {
                 <TextInput
                   style={styles.input}
                   placeholder="Votre téléphone"
-                  value={user.phone}
-                  editable={false} // Rendre le champ non modifiable
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
                 />
               </View>
 
@@ -247,12 +339,23 @@ export default function ProfileContent({ path }: { path: string }) {
                   autoCapitalize="none"
                 />
               </View>
+              
+              <View style={styles.buttonSection}>
+                <CommunButton 
+                  label={isSavingProfile ? "Enregistrement..." : "Enregistrer les informations"} 
+                  onClick={updateProfile}
+                  disabled={isSavingProfile}
+                />
+              </View>
             </View>
 
+            {/* Section Sécurité / Mot de passe */}
             <View style={styles.formSection}>
-              <Text style={styles.sectionTitle}>Sécurité</Text>
+              <Text style={styles.sectionTitle}>Changer mon mot de passe</Text>
+              
               <Text style={styles.infoText}>
-                Laissez les champs vides si vous ne souhaitez pas modifier votre mot de passe
+                Votre mot de passe doit contenir au moins 10 caractères dont une lettre majuscule, 
+                une lettre minuscule, un chiffre et un caractère spécial.
               </Text>
 
               <View style={styles.inputGroup}>
@@ -292,20 +395,21 @@ export default function ProfileContent({ path }: { path: string }) {
                   </TouchableOpacity>
                 </View>
               </View>
+              
+              <View style={styles.buttonSection}>
+                <CommunButton 
+                  label={isSavingPassword ? "Mise à jour..." : "Modifier le mot de passe"} 
+                  onClick={updatePassword}
+                  disabled={isSavingPassword}
+                />
+              </View>
             </View>
 
-            <View style={styles.buttonSection}>
-              <CommunButton 
-                label={isSaving ? "Enregistrement..." : "Enregistrer les modifications"} 
-                onClick={updateUser}
-                disabled={isSaving}
-              />
-            </View>
-
+            {/* Section de suppression du compte */}
             <TouchableOpacity 
               style={styles.deleteAccountButton} 
               onPress={confirmDeleteUser}
-              disabled={isSaving}
+              disabled={isSavingProfile || isSavingPassword}
             >
               <Text style={styles.deleteAccountText}>Supprimer mon compte</Text>
             </TouchableOpacity>
@@ -427,7 +531,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonSection: {
-    marginBottom: 20,
+    marginTop: 15,
   },
   deleteAccountButton: {
     alignSelf: "center",

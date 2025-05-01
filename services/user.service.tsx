@@ -2,6 +2,7 @@ import axios from "axios";
 import { User } from "@/models/user.model";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import { PasswordUpdateResponse } from "@/models/auth/PasswordUpdateResponse";
 
 const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
 const API_URL = LOCALHOST_URL +  "/user";
@@ -65,5 +66,48 @@ export class UserService {
     const response = await axios.delete<string>(`${API_URL}/${id}`);
     return response.data;
   }
-}
 
+   async updateProfile(profileUpdatePayload: {
+    firstname: string;
+    lastname: string;
+    phone: string;
+    email: string;
+    password?: string;
+  }): Promise<{ success: boolean; accessToken?: string }> {
+    try {
+      const response = await axios.post(`${API_URL}/update`, profileUpdatePayload, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      });
+      return response.data; // Retourne l'objet { success, accessToken }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du profil :", error);
+      throw error;
+    }
+  }
+
+async updatePassword(passwordUpdatePayload: { password: string }): Promise<PasswordUpdateResponse> {
+  try {
+    const response = await axios.post(
+      `${API_URL}/update-password`, 
+      passwordUpdatePayload, 
+      {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du mot de passe :", error);
+    
+    if (axios.isAxiosError(error) && error.response) {
+      if (error.response.data && error.response.data.status) {
+        return error.response.data as PasswordUpdateResponse;
+      }
+    }
+    throw error;
+  }
+}
+}
