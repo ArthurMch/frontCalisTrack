@@ -1,70 +1,40 @@
-import axios from "axios";
 import { Exercise } from "@/models/exercise.model";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import { api } from "./apiClient";
 
 const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
-const API_URL = LOCALHOST_URL + "/exercise";
-
 
 export class ExerciseService {
+
+    private readonly BASE_PATH = '/exercise/';
   
-      /**
-   * Crée un nouvel exercise
-   * @param exercise L'objet exercise à créer
-   * @returns L'exercise créé
+  /**
+   * Crée un nouvel exercice
+   * @param exercise L'objet exercice à créer
+   * @returns L'exercice créé
    */
   async create(exercise: Exercise): Promise<Exercise> {
-  const token = await AsyncStorage.getItem("token"); // Récupérer le token
-  const response = await axios.post<Exercise>(
-    `${API_URL}/`,
-    exercise,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`, // Inclure le token dans les en-têtes
-      },
-    }
-  );
-  return response.data;
-}
-
-
-  /**
-   * Récupère la liste de tous les exercises
-   * @returns Liste des exercises
-   */
- async findAll(): Promise<Exercise[]> {
-  try {
-    const token = await AsyncStorage.getItem("token");
-    const response = await axios.get<Exercise[]>(`${API_URL}/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log("Réponse API:", response.status);
+    const response = await api.post(this.BASE_PATH, exercise);
     return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Erreur axios:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message
-      });
-    } else {
-      console.error("Erreur non-axios:", error);
-    }
-    throw error;
   }
-}
+
+   /**
+   * Récupère tous les exercices
+   * @param filters Filtres optionnels
+   * @returns Liste des exercices
+   */
+  async findAll(filters = {}): Promise<Exercise[]> {
+    const response = await api.get(this.BASE_PATH, { params: filters });
+    return response.data;
+  }
 
     /**
-   * Récupère un exercise
-   * @param id id de l'exercise
-   * @returns l'exercise
+   * Récupère un exercice par son ID
+   * @param id ID de l'exercice
+   * @returns L'exercice trouvé
    */
   async findById(id: number): Promise<Exercise> {
-    const response = await axios.get<Exercise>(`${API_URL}/${id}`);
+    const response = await api.get(`${this.BASE_PATH}${id}`);
     return response.data;
   }
 
@@ -75,13 +45,7 @@ export class ExerciseService {
    * @returns L'exercise mis à jour
    */
   async update(id: number, exercise: Exercise): Promise<Exercise> {
-    const token = await AsyncStorage.getItem("token");
-    const response = await axios.put<Exercise>(`${API_URL}/${id}`, exercise , {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-    );
+    const response = await api.put(`${this.BASE_PATH}${id}`, exercise);
     return response.data;
   }
 
@@ -91,14 +55,10 @@ export class ExerciseService {
    * @returns Un message de confirmation
    */
   async delete(id: number): Promise<string> {
-    console.log('was called')
-     const token = await AsyncStorage.getItem("token");
-    const response = await axios.delete<string>(`${API_URL}/${id}`,{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await api.delete(`${this.BASE_PATH}${id}`);
     return response.data;
   }
 
 }
+
+export const exerciseService = new ExerciseService();

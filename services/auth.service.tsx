@@ -1,58 +1,64 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import { api } from "./apiClient";
 import { User } from "@/models/user.model";
-import Constants from "expo-constants";
 import { LoginRequest } from "@/models/auth/LoginRequest";
 import { JwtResponse } from "@/models/auth/JwtResponse";
 
-const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
-const API_URL = LOCALHOST_URL + "/api/auth";
+const AUTH_ENDPOINT = "/api/auth";
 
 export class AuthService {
   
   async login(loginRequest: LoginRequest): Promise<JwtResponse> {
-      console.log(API_URL);
-    const response = await axios.post(`${API_URL}/login`,loginRequest);
-  
-    return response.data; // This will be the JWT token
+    const response = await api.post<JwtResponse>(`${AUTH_ENDPOINT}/login`, loginRequest);
+    
+    // Stocker le token après la connexion
+    if (response.data.accessToken) {
+      await AsyncStorage.setItem("token", response.data.accessToken);
+    }
+    
+    return response.data;
   }
 
-   async logout() {
-    await AsyncStorage.removeItem("token"); // Clear the token
+  async logout() {
+
+    // Nettoyage local
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("refreshToken");
+    await AsyncStorage.removeItem("currentUser");
   }
 
   async register(user: User): Promise<void> {
-    await axios.post(`${API_URL}/register`, user);
+    await api.post(`${AUTH_ENDPOINT}/register`, user);
   }
 
   async validateToken(token: string): Promise<boolean> {
     try {
-      const response = await axios.post(`${API_URL}/validate-token`, { token });
+      const response = await api.post(`${AUTH_ENDPOINT}/validate-token`, { token });
       return response.data.isValid;
     } catch (error) {
       console.error("Token validation failed:", error);
       return false;
     }
   }
-  async getUserInfo(token: string): Promise<User> {
+  
+  async getUserInfo(): Promise<User> {
     try {
-      const response = await axios.get(`${API_URL}/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response.data; // Assume the API returns user data
+      const response = await api.get<User>(`${AUTH_ENDPOINT}/user`);
+      
+      // Optionnel : stocker les informations utilisateur
+      await AsyncStorage.setItem("currentUser", JSON.stringify(response.data));
+      
+      return response.data;
     } catch (error) {
       console.error("Failed to fetch user info:", error);
       throw error;
     }
   }
 
- async lostPassword(email: string): Promise<void> {
+  async lostPassword(email: string): Promise<void> {
     try {
-      await axios.post(`${API_URL}/lost-password`, { email });
-    }
-    catch (error) {
+      await api.post(`${AUTH_ENDPOINT}/lost-password`, { email });
+    } catch (error) {
       console.error("Failed to send reset password email:", error);
       throw error;
     }
@@ -60,7 +66,7 @@ export class AuthService {
 
   async isValidLostPassword(token: string): Promise<void> {
     try {
-      await axios.post(`${API_URL}/is-valid-lost-password`, { token });
+      await api.post(`${AUTH_ENDPOINT}/is-valid-lost-password`, { token });
     } catch (error) {
       console.error("Invalid token:", error);
       throw error;
@@ -68,11 +74,11 @@ export class AuthService {
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-      try {
-        await axios.post(`${API_URL}/reset-password`, { token, password });
-      } catch (error) {
-        console.error("Failed to send reset password email:", error);
-        throw error;
-      }
+    try {
+      await api.post(`${AUTH_ENDPOINT}/reset-password`, { token, password });
+    } catch (error) {
+      console.error("Failed to reset password:", error);
+      throw error;
+    }
   }
 }

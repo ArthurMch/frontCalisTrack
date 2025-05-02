@@ -6,8 +6,9 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { AuthEvents } from "@/services/apiClient";
 
-// Ton type utilisateur
 interface User {
   id: number;
   email: string;
@@ -16,31 +17,43 @@ interface User {
 interface UserContextType {
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
+  logout: () => Promise<void>;
+  isLoading: boolean;
 }
 
-// Crée le contexte
 const UserContext = createContext<UserContextType | undefined>(undefined);
-
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUserState] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Charger l'utilisateur depuis AsyncStorage au démarrage
   useEffect(() => {
     const loadUserFromStorage = async () => {
       try {
+        setIsLoading(true);
         const storedUser = await AsyncStorage.getItem("currentUser");
         if (storedUser) {
           setCurrentUserState(JSON.parse(storedUser));
         }
       } catch (error) {
         console.error("Erreur lors du chargement de l'utilisateur :", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadUserFromStorage();
   }, []);
 
-  // Mettre à jour à la fois le state et AsyncStorage
+  useEffect(() => {
+    AuthEvents.onTokenExpired = () => {
+      logout();
+    };
+
+    return () => {
+      AuthEvents.onTokenExpired = null;
+    };
+  }, []);
+
   const setCurrentUser = async (user: User | null) => {
     try {
       if (user) {
@@ -53,15 +66,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       console.error("Erreur lors de la sauvegarde de l'utilisateur :", error);
     }
   };
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("refreshToken");
+      await AsyncStorage.removeItem("currentUser");
+      
+      setCurrentUserState(null);
+      
+      if (router.canGoBack()) {
+        router.replace("/login");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error);
+    }
+  };
 
   return (
-    <UserContext.Provider value={{ currentUser, setCurrentUser }}>
+    <UserContext.Provider value={{ currentUser, setCurrentUser, logout, isLoading }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-// Hook d'accès au contexte
 export const useUserContext = () => {
   const context = useContext(UserContext);
   if (!context) {

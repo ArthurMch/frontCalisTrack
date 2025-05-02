@@ -1,5 +1,5 @@
 import { User } from "@/models/user.model";
-import { UserService } from "@/services/user.service";
+import { userService, UserService } from "@/services/user.service";
 import { useEffect, useState } from "react";
 import { 
   View, 
@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CommunButton from "./CommunButton";
 import { useUserContext } from "./contexts/UserContext";
 import AppModal from "./AppModal";
+import { router } from "expo-router";
 
 export default function ProfileContent({ path }: { path: string }) {
   const [firstname, setFirstname] = useState("");
@@ -38,8 +39,6 @@ export default function ProfileContent({ path }: { path: string }) {
   const [showPasswordInfoModal, setShowPasswordInfoModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [modalTitle, setModalTitle] = useState("");
-  
-  const userService = new UserService();
   const { currentUser } = useUserContext();
   
   // Fonction pour récupérer l'utilisateur
@@ -288,11 +287,30 @@ export default function ProfileContent({ path }: { path: string }) {
     
     try {
       await userService.delete(user.id!);
+      
+      // Afficher le message de succès
       showSuccessMessage(
         "Compte supprimé", 
         "Votre compte a été supprimé avec succès."
       );
+      
+      // Réinitialiser l'utilisateur dans le composant
       setUser(null);
+      
+      // Nettoyer les informations d'authentification
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("refreshToken");
+      await AsyncStorage.removeItem("currentUser");
+      
+      // Attendre un court instant pour que l'utilisateur puisse voir le message
+      setTimeout(() => {
+        // Fermer la modale de succès si elle est ouverte
+        setShowSuccessModal(false);
+        
+        // Rediriger vers la page de login
+        router.replace("/login");
+      }, 1500); // 1.5 secondes de délai
+      
     } catch (error) {
       console.error("Erreur lors de la suppression de l'utilisateur :", error);
       showErrorMessage(
@@ -511,7 +529,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   container: {
-    width: screenWidth * 0.95,
+    width: screenWidth ,
     alignSelf: "center",
     backgroundColor: "#f5f5f5",
     borderRadius: 12,

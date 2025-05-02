@@ -11,9 +11,9 @@ import {
   Easing,
   Modal
 } from "react-native";
-import { ExerciseService } from "@/services/exercise.service";
+import { exerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
-import AppModal from "@/components/AppModal"; // Import du composant modal
+import AppModal from "@/components/AppModal"; 
 
 export default function ExerciseContent({ path }: { path: string }) {
   const [name, setName] = useState("");
@@ -26,7 +26,7 @@ export default function ExerciseContent({ path }: { path: string }) {
   const [isCreateSectionVisible, setIsCreateSectionVisible] = useState(true);
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const exerciseService = new ExerciseService();
+ 
   
   // État pour les modals
   const [modal, setModal] = useState({
@@ -175,7 +175,10 @@ export default function ExerciseContent({ path }: { path: string }) {
   return (
     <View style={styles.container}>
       {/* Liste des exercices */}
-      <Text style={styles.sectionTitle}>Liste des exercices</Text>
+      <View style={styles.titleContainer}>
+  <Text style={styles.sectionTitle}>Liste des exercices</Text>
+  <View style={styles.titleUnderline} />
+</View>
       {loading && <Text style={styles.statusText}>Chargement des exercices...</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
       {!loading && !error && exercises.length === 0 && (
@@ -354,17 +357,11 @@ const screenWidth = Dimensions.get("window").width;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: screenWidth * 0.95,
+    width: screenWidth ,
     alignSelf: "center",
     backgroundColor: "#f5f5f5",
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
     elevation: 4,
-    padding: 14, 
-    margin: 5,
+    margin: 0,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -373,7 +370,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#4a90e2",
     padding: 16,
     borderRadius: 10,
-    marginBottom: 0, // Supprimé l'espace entre le header et le contenu
+    marginTop: 10, // Supprimé l'espace entre le header et le contenu
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -394,7 +391,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#4a90e2",
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
-    marginBottom: 15, // Marge appliquée au conteneur extérieur plutôt qu'au header
+    marginBottom: 0, // Marge appliquée au conteneur extérieur plutôt qu'au header
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -404,12 +401,32 @@ const styles = StyleSheet.create({
   formInnerContainer: {
     padding: 16,
   },
+   titleContainer: {
+    width: "100%",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    backgroundColor: "#2971cc",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    marginBottom: 0,
+  },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
+    color: "#fff",
     textAlign: "center",
+    letterSpacing: 0.5,
+  },
+  titleUnderline: {
+    width: 60,
+    height: 3,
+    backgroundColor: "#fff",
+    borderRadius: 3,
+    alignSelf: "center",
+    marginTop: 8,
   },
   input: {
     borderWidth: 1,
@@ -441,7 +458,8 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   exerciseItem: {
-    marginTop: 8,
+    marginTop: 10,
+    marginHorizontal: 16,
     backgroundColor: "#ffffff",
     borderRadius: 10,
     shadowColor: "#000",
@@ -457,6 +475,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     position: "relative",
+    paddingHorizontal: 10,
+    margin: 8,
   },
   exerciseInfo: {
     flex: 1,

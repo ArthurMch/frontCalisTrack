@@ -1,37 +1,44 @@
 import React, { useEffect, useState } from 'react';
-import { Stack, usePathname, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { useColorScheme } from 'react-native';
+import { ThemeProvider, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, InteractionManager, ActivityIndicator } from 'react-native'; // Import jwt-decode to decode JWT tokens
-import { useColorScheme } from '@/components/useColorScheme';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { AuthService } from '@/services/auth.service';
 import { UserProvider } from '@/components/contexts/UserContext';
+import { api } from '../services/apiClient';
 
 export const unstable_settings = {
-  initialRouteName: 'login',
+  initialRouteName: '(auth)',
 };
+
+function LoadingScreen() {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator size="large" />
+      <Text>Vérification de l'authentification...</Text>
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const colorScheme = useColorScheme();
-  const router = useRouter(); 
-  const authService = new AuthService(); 
-  const pathname = usePathname();
-    const publicPaths = ['/register', '/reset-password', '/forgot-password', '/login', '/lostPassword', '/validate-email', '/validate-token', '/validate-reset-password'];
 
- useEffect(() => {
+  useEffect(() => {
     const checkAuth = async () => {
-      const token = await AsyncStorage.getItem('token');
-
-      if (token) {
-        const isValid = await validateToken(token);
-
-        if (isValid) {
-          setIsAuthenticated(true);
+      try {
+        const token = await AsyncStorage.getItem('token');
+        
+        if (token) {
+          // Utilisez votre API client pour vérifier le token
+          // Cela déclenchera automatiquement l'intercepteur en cas d'erreur 401
+          const isValid = await validateToken();
+          setIsAuthenticated(isValid);
         } else {
           setIsAuthenticated(false);
         }
-      } else {
+      } catch (error) {
+        console.error("Erreur lors de la vérification de l'authentification:", error);
         setIsAuthenticated(false);
       }
     };
@@ -39,52 +46,46 @@ export default function RootLayout() {
     checkAuth();
   }, []);
 
-  const validateToken = async (token: string): Promise<boolean> => {
+  const validateToken = async (): Promise<boolean> => {
     try {
-      const data = await authService.validateToken(token);
-      return data;
+      // Appel à votre endpoint de validation de token
+      // L'intercepteur gérera automatiquement les erreurs 401
+      await api.get('/auth/validate-token');
+      return true;
     } catch (error) {
       console.error('Token validation failed:', error);
       return false;
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated === false && !publicPaths.includes(pathname)) {
-      router.replace('/login');
-    }
-  }, [isAuthenticated, pathname]);
-
+  // Afficher un écran de chargement pendant la vérification
   if (isAuthenticated === null) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text>Vérification de l'authentification...</Text>
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <UserProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
+        <Stack screenOptions={{ headerShown: false }}>
           {isAuthenticated ? (
-            <Stack.Screen
-              name="(tabs)"
-              options={{
+            <Stack.Screen 
+              name="(app)" 
+              options={{ 
                 headerShown: false,
-                headerBackVisible: false,
-              }}
+                // Empêcher le retour aux écrans d'authentification
+                gestureEnabled: false 
+              }} 
             />
           ) : (
-            <>
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="register" options={{ headerShown: false }} />
-            </>
+            <Stack.Screen 
+              name="(auth)" 
+              options={{ 
+                headerShown: false 
+              }} 
+            />
           )}
         </Stack>
       </ThemeProvider>
     </UserProvider>
   );
 }
-
