@@ -9,12 +9,12 @@ import {
   Dimensions, 
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
-  Alert
+  ActivityIndicator
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CommunButton from "./CommunButton";
 import { useUserContext } from "./contexts/UserContext";
+import AppModal from "./AppModal";
 
 export default function ProfileContent({ path }: { path: string }) {
   const [firstname, setFirstname] = useState("");
@@ -30,12 +30,21 @@ export default function ProfileContent({ path }: { path: string }) {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  
+  // États pour les modals
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [showPasswordInfoModal, setShowPasswordInfoModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
+  
   const userService = new UserService();
   const { currentUser } = useUserContext();
   
   // Fonction pour récupérer l'utilisateur
   const fetchUser = async () => {
-     if (!currentUser || currentUser == null) {
+    if (!currentUser || currentUser == null) {
       console.error("Aucun utilisateur connecté.");
       return;
     }
@@ -47,6 +56,7 @@ export default function ProfileContent({ path }: { path: string }) {
       if (!data) {
         setUser(null);
         setError("Aucun utilisateur trouvé.");
+        showErrorMessage("Erreur", "Aucun utilisateur trouvé.");
       } else {
         console.log("Utilisateur récupéré :", data);
         setUser(data);
@@ -58,6 +68,7 @@ export default function ProfileContent({ path }: { path: string }) {
     } catch (error) {
       console.error("Erreur lors de la récupération de l'utilisateur :", error);
       setError("Impossible de récupérer l'utilisateur. Veuillez réessayer plus tard.");
+      showErrorMessage("Erreur de chargement", "Impossible de récupérer l'utilisateur. Veuillez réessayer plus tard.");
     } finally {
       setLoading(false);
     } 
@@ -69,17 +80,44 @@ export default function ProfileContent({ path }: { path: string }) {
     }
   }, [currentUser]); // Déclenche fetchUser dès que currentUser est dispo
 
+  // Fonction pour afficher un message d'erreur
+  const showErrorMessage = (title: string, message: string) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setShowErrorModal(true);
+  };
+
+  // Fonction pour afficher un message de succès
+  const showSuccessMessage = (title: string, message: string) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setShowSuccessModal(true);
+  };
+
+  // Fonction pour montrer les informations sur le mot de passe
+  const showPasswordRequirements = () => {
+    setModalTitle("Exigences du mot de passe");
+    setModalMessage(
+      "Votre mot de passe doit contenir au moins 10 caractères, incluant au moins:\n" +
+      "- Une lettre majuscule\n" +
+      "- Une lettre minuscule\n" +
+      "- Un chiffre\n" +
+      "- Un caractère spécial (@$!.,;+:§£¤%*=|`#?&(){}/^_-...)"
+    );
+    setShowPasswordInfoModal(true);
+  };
+
   // Fonction pour valider le formulaire de profil
   const validateProfileForm = () => {
     if (!firstname || !lastname || !email || !phone) {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires.");
+      showErrorMessage("Champs obligatoires", "Veuillez remplir tous les champs obligatoires.");
       return false;
     }
 
     // Validation de l'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert("Erreur", "Veuillez entrer une adresse email valide.");
+      showErrorMessage("Format invalide", "Veuillez entrer une adresse email valide.");
       return false;
     }
 
@@ -90,12 +128,12 @@ export default function ProfileContent({ path }: { path: string }) {
   const validatePasswordForm = () => {
     // Vérification si les mots de passe correspondent
     if (!password || !confirmPassword) {
-      Alert.alert("Erreur", "Veuillez remplir les deux champs de mot de passe.");
+      showErrorMessage("Champs obligatoires", "Veuillez remplir les deux champs de mot de passe.");
       return false;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Erreur", "Les mots de passe ne correspondent pas.");
+      showErrorMessage("Mots de passe différents", "Les mots de passe ne correspondent pas.");
       return false;
     }
 
@@ -104,14 +142,17 @@ export default function ProfileContent({ path }: { path: string }) {
     const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!.,;+:§£¤%*=|`\\#?&(){}\[\]~\/^_-]).{10,}$/;
     
     if (!passwordPattern.test(password)) {
-      Alert.alert(
-        "Erreur", 
+      // Au lieu d'afficher deux modales, on affiche directement la modale d'information
+      // qui est plus complète et éducative pour l'utilisateur
+      setModalTitle("Format incorrect");
+      setModalMessage(
         "Le mot de passe doit contenir au moins 10 caractères, incluant au moins:\n" +
         "- Une lettre majuscule\n" +
         "- Une lettre minuscule\n" +
         "- Un chiffre\n" +
         "- Un caractère spécial (@$!.,;+:§£¤%*=|`#?&(){}/^_-...)"
       );
+      setShowPasswordInfoModal(true);
       return false;
     }
 
@@ -138,10 +179,9 @@ export default function ProfileContent({ path }: { path: string }) {
       const response = await userService.updateProfile(profileUpdatePayload);
 
       if (response.success) {
-        Alert.alert(
-          "Succès",
-          "Vos informations personnelles ont été mises à jour avec succès !",
-          [{ text: "OK" }]
+        showSuccessMessage(
+          "Profil mis à jour",
+          "Vos informations personnelles ont été mises à jour avec succès !"
         );
 
         // Si un nouveau token est retourné, mettez-le à jour dans AsyncStorage
@@ -152,15 +192,15 @@ export default function ProfileContent({ path }: { path: string }) {
         // Recharger les informations utilisateur
         fetchUser();
       } else {
-        Alert.alert(
-          "Erreur",
+        showErrorMessage(
+          "Échec de la mise à jour",
           "Une erreur est survenue lors de la mise à jour du profil."
         );
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'utilisateur :", error);
-      Alert.alert(
-        "Erreur",
+      showErrorMessage(
+        "Erreur système",
         "Une erreur est survenue lors de la mise à jour du profil."
       );
     } finally {
@@ -186,10 +226,9 @@ export default function ProfileContent({ path }: { path: string }) {
 
       // Gestion des différents statuts de réponse
       if (response.status === 'DONE') {
-        Alert.alert(
-          "Succès",
-          "Votre mot de passe a été mis à jour avec succès !",
-          [{ text: "OK" }]
+        showSuccessMessage(
+          "Mot de passe mis à jour",
+          "Votre mot de passe a été mis à jour avec succès !"
         );
 
         // Si un nouveau token est retourné, mettez-le à jour dans AsyncStorage
@@ -201,25 +240,31 @@ export default function ProfileContent({ path }: { path: string }) {
         setPassword("");
         setConfirmPassword("");
       } else if (response.status === 'INCORRECT') {
-        Alert.alert(
-          "Format incorrect",
-          "Le mot de passe ne respecte pas les critères de sécurité requis."
+        // Afficher directement la modale d'information sur les exigences du mot de passe
+        setModalTitle("Format incorrect");
+        setModalMessage(
+          "Le mot de passe doit contenir au moins 10 caractères, incluant au moins:\n" +
+          "- Une lettre majuscule\n" +
+          "- Une lettre minuscule\n" +
+          "- Un chiffre\n" +
+          "- Un caractère spécial (@$!.,;+:§£¤%*=|`#?&(){}/^_-...)"
         );
+        setShowPasswordInfoModal(true);
       } else if (response.status === 'ALREADY') {
-        Alert.alert(
-          "Erreur",
+        showErrorMessage(
+          "Mot de passe déjà utilisé",
           "Ce mot de passe a déjà été utilisé récemment. Veuillez en choisir un nouveau."
         );
       } else {
-        Alert.alert(
-          "Erreur",
+        showErrorMessage(
+          "Échec de la mise à jour",
           "Une erreur est survenue lors de la mise à jour du mot de passe."
         );
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour du mot de passe :", error);
-      Alert.alert(
-        "Erreur",
+      showErrorMessage(
+        "Erreur système",
         "Une erreur est survenue lors de la mise à jour du mot de passe."
       );
     } finally {
@@ -227,16 +272,9 @@ export default function ProfileContent({ path }: { path: string }) {
     }
   };
 
-  // Fonction pour confirmer la suppression de l'utilisateur
+  // Fonction pour ouvrir la confirmation de suppression de compte
   const confirmDeleteUser = () => {
-    Alert.alert(
-      "Supprimer le compte",
-      "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
-      [
-        { text: "Annuler", style: "cancel" },
-        { text: "Supprimer", style: "destructive", onPress: () => deleteUser() }
-      ]
-    );
+    setShowDeleteConfirmModal(true);
   };
 
   // Fonction pour supprimer l'utilisateur
@@ -244,19 +282,21 @@ export default function ProfileContent({ path }: { path: string }) {
     if (!user) {
       return;
     }
+    
+    setShowDeleteConfirmModal(false);
     setIsSavingProfile(true);
+    
     try {
       await userService.delete(user.id!);
-      Alert.alert(
+      showSuccessMessage(
         "Compte supprimé", 
-        "Votre compte a été supprimé avec succès.",
-        [{ text: "OK" }]
+        "Votre compte a été supprimé avec succès."
       );
       setUser(null);
     } catch (error) {
       console.error("Erreur lors de la suppression de l'utilisateur :", error);
-      Alert.alert(
-        "Erreur", 
+      showErrorMessage(
+        "Échec de la suppression", 
         "Une erreur est survenue lors de la suppression du compte."
       );
     } finally {
@@ -353,10 +393,14 @@ export default function ProfileContent({ path }: { path: string }) {
             <View style={styles.formSection}>
               <Text style={styles.sectionTitle}>Changer mon mot de passe</Text>
               
-              <Text style={styles.infoText}>
-                Votre mot de passe doit contenir au moins 10 caractères dont une lettre majuscule, 
-                une lettre minuscule, un chiffre et un caractère spécial.
-              </Text>
+              <View style={styles.infoContainer}>
+                <Text style={styles.infoText}>
+                  Votre mot de passe doit respecter des critères de sécurité spécifiques.
+                </Text>
+                <TouchableOpacity onPress={showPasswordRequirements}>
+                  <Text style={styles.infoLink}>Voir les exigences</Text>
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Nouveau mot de passe</Text>
@@ -416,6 +460,47 @@ export default function ProfileContent({ path }: { path: string }) {
           </View>
         ) : null}
       </View>
+
+      {/* Modals */}
+      <AppModal
+        visible={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="error"
+      />
+
+      <AppModal
+        visible={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="success"
+      />
+
+      <AppModal
+        visible={showPasswordInfoModal}
+        onClose={() => setShowPasswordInfoModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="info"
+      />
+
+      <AppModal
+        visible={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        title="Supprimer le compte"
+        message="Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
+        type="error"
+        confirmButton={{
+          text: "Supprimer",
+          onPress: deleteUser
+        }}
+        cancelButton={{
+          text: "Annuler",
+          onPress: () => setShowDeleteConfirmModal(false)
+        }}
+      />
     </ScrollView>
   );
 }
@@ -524,11 +609,22 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: 12,
   },
+  infoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+    flexWrap: "wrap",
+  },
   infoText: {
     fontSize: 13,
     color: "#666",
-    fontStyle: "italic",
-    marginBottom: 10,
+    marginRight: 5,
+  },
+  infoLink: {
+    fontSize: 13,
+    color: "#4a90e2",
+    fontWeight: "500",
+    textDecorationLine: "underline",
   },
   buttonSection: {
     marginTop: 15,
@@ -536,7 +632,7 @@ const styles = StyleSheet.create({
   deleteAccountButton: {
     alignSelf: "center",
     paddingVertical: 10,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   deleteAccountText: {
     color: "#e74c3c",
