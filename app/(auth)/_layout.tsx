@@ -16,7 +16,11 @@ export default function AuthLayout() {
         <Stack.Screen 
           name="register" 
           options={{ 
-            headerShown: false,
+            headerTitle: "Retour",
+            headerBackTitle: "Retour",
+            headerStyle: {
+              backgroundColor: "#4a90e2",
+            },
           }} 
         />
         <Stack.Screen 

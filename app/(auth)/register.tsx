@@ -314,6 +314,8 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: "#f5f5f5",
+    borderTopColor: "#ddd",
+    borderTopWidth: 1,
   },
   container: {
     flex: 1,
@@ -323,7 +325,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 24,
-    marginTop: 40,
+    marginTop: 20,
   },
   title: {
     fontSize: 28,
