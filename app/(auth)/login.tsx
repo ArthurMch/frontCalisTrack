@@ -45,6 +45,8 @@ export default function LoginPage() {
 
   return (
     <View style={styles.container}>
+       {/* Titre global */}
+            <View style={styles.titleGlobal}>CALISTRACK</View>
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
@@ -97,5 +99,13 @@ const styles = StyleSheet.create({
     marginTop: 15,
     color: "#007bff",
     textAlign: "center",
+  },
+  titleGlobal: {
+    position: 'relative',
+    top: -150,
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#4a90e2',
   },
 });

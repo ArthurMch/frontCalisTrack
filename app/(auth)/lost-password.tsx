@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AuthService } from '@/services/auth.service';
+import { authService } from '@/services/auth.service';
 
 export default function LostPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const authService = new AuthService();
 
   const handleResetPassword = async () => {
     // Validation de l'email
@@ -21,7 +20,7 @@ export default function LostPasswordPage() {
     setMessage(null);
 
     try {
-      // Remplacez par votre appel API réel
+      
       await authService.lostPassword(email);
       
       // Message de succès
@@ -77,7 +76,7 @@ export default function LostPasswordPage() {
       
       <Button 
         title="Retour à la connexion" 
-        onPress={() => router.push('/')}
+        onPress={() => router.push('/login')}
       />
     </View>
   );

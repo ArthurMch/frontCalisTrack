@@ -4,6 +4,7 @@ import { View, StyleSheet } from 'react-native';
 export default function AuthLayout() {
   return (
     <View style={styles.container}>
+       
       <Stack>
         <Stack.Screen 
           name="login" 
@@ -15,22 +16,19 @@ export default function AuthLayout() {
         <Stack.Screen 
           name="register" 
           options={{ 
-            headerTitle: "Inscription",
-            headerBackTitle: "Retour"
+            headerShown: false,
           }} 
         />
         <Stack.Screen 
           name="lost-password" 
           options={{ 
-            headerTitle: "Mot de passe oublié",
-            headerBackTitle: "Retour"
+            headerShown: false,
           }} 
         />
         <Stack.Screen 
           name="reset-password" 
           options={{ 
-            headerTitle: "Réinitialiser le mot de passe",
-            headerBackTitle: "Retour"
+            headerShown: false,
           }} 
         />
       </Stack>
