@@ -46,7 +46,7 @@ export default function LoginPage() {
   return (
     <View style={styles.container}>
        {/* Titre global */}
-            <View style={styles.titleGlobal}>CALISTRACK</View>
+            <Text style={styles.titleGlobal}>CALISTRACK</Text>
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}

@@ -1,12 +1,13 @@
 import axios from "axios";
 import { Training } from "@/models/training.model";
 import Constants from "expo-constants";
+import { api } from "./apiClient";
 
 const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
-const API_URL = LOCALHOST_URL + "/training";
 
 export class TrainingService {
-
+     
+   private readonly BASE_PATH = '/training/';
       
       /**
    * Crée un nouvel entrainement
@@ -14,7 +15,7 @@ export class TrainingService {
    * @returns L'entrainement créé
    */
   async create(training: Training): Promise<Training> {
-    const response = await axios.post<Training>(`${API_URL}/`, training);
+    const response = await api.post<Training>(this.BASE_PATH, training);
     return response.data;
   }
 
@@ -22,8 +23,17 @@ export class TrainingService {
    * Récupère la liste de tous les entrainements
    * @returns Liste des entrainements
    */
-  async findAll(): Promise<Training[]> {
-    const response = await axios.get<Training[]>(`${API_URL}/`);
+  async findAll(filters = {}): Promise<Training[]> {
+    const response = await api.get(this.BASE_PATH, { params: filters });
+    return response.data;
+  }
+
+    /**
+   * Récupère la liste de tous les entrainements
+   * @returns Liste des entrainements
+   */
+  async findAllByUser(id: number): Promise<Training[]> {
+    const response = await api.get(`${this.BASE_PATH + "user/"}${id}`);
     return response.data;
   }
 
@@ -33,7 +43,7 @@ export class TrainingService {
    * @returns l'entrainement
    */
   async findById(id: number): Promise<Training> {
-    const response = await axios.get<Training>(`${API_URL}/${id}`);
+    const response = await api.get(`${this.BASE_PATH}${id}`);
     return response.data;
   }
 
@@ -44,7 +54,7 @@ export class TrainingService {
    * @returns L'entrainement mis à jour
    */
   async update(id: number, training: Training): Promise<Training> {
-    const response = await axios.put<Training>(`${API_URL}/${id}`, training);
+    const response = await api.put(`${this.BASE_PATH}${id}`, training);
     return response.data;
   }
 
@@ -54,8 +64,10 @@ export class TrainingService {
    * @returns Un message de confirmation
    */
   async delete(id: number): Promise<string> {
-    const response = await axios.delete<string>(`${API_URL}/${id}`);
+    const response = await api.delete(`${this.BASE_PATH}${id}`);
     return response.data;
   }
-
+  
 }
+
+export const trainingService = new TrainingService();

@@ -3,6 +3,7 @@ import { api } from "./apiClient";
 import { User } from "@/models/user.model";
 import { LoginRequest } from "@/models/auth/LoginRequest";
 import { JwtResponse } from "@/models/auth/JwtResponse";
+import { router } from "expo-router";
 
 const AUTH_ENDPOINT = "/api/auth";
 
@@ -25,6 +26,7 @@ export class AuthService {
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("refreshToken");
     await AsyncStorage.removeItem("currentUser");
+   
   }
 
   async register(user: User): Promise<void> {
@@ -37,6 +39,10 @@ export class AuthService {
       return response.data.isValid;
     } catch (error) {
       console.error("Token validation failed:", error);
+      // En cas d'erreur, on considère que le token n'est pas valide
+      await this.logout()
+
+      
       return false;
     }
   }

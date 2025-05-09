@@ -1,8 +1,5 @@
 import { Exercise } from "@/models/exercise.model";
-import Constants from "expo-constants";
 import { api } from "./apiClient";
-
-const LOCALHOST_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
 
 export class ExerciseService {
 

@@ -3,9 +3,11 @@ import { User } from "./user.model";
 
 export interface Training {
   id: number | null;
+  name: string;
   date: string;
   numberOfExercise: number | null;
   totalMinutesOfRest: number | null;
   totalMinutesOfTraining: number | null;
-  trainingUser: User;
+  trainingUser: number | null;
+  exercises: Exercise[];
 }

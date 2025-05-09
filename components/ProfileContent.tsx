@@ -35,6 +35,7 @@ export default function ProfileContent({ path }: { path: string }) {
   // États pour les modals
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showPasswordInfoModal, setShowPasswordInfoModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
@@ -467,6 +468,13 @@ export default function ProfileContent({ path }: { path: string }) {
               </View>
             </View>
 
+            <View style={styles.formSection}>
+              <Text style={styles.sectionTitle}>Gestion de compte</Text>
+            <CommunButton 
+              label={"Déconnexion"} 
+              onClick={() => setShowLogoutModal(true)}
+              disabled={isSavingProfile || isSavingPassword}
+            />
             {/* Section de suppression du compte */}
             <TouchableOpacity 
               style={styles.deleteAccountButton} 
@@ -475,6 +483,7 @@ export default function ProfileContent({ path }: { path: string }) {
             >
               <Text style={styles.deleteAccountText}>Supprimer mon compte</Text>
             </TouchableOpacity>
+            </View>
           </View>
         ) : null}
       </View>
@@ -503,6 +512,24 @@ export default function ProfileContent({ path }: { path: string }) {
         message={modalMessage}
         type="info"
       />
+
+      <AppModal
+        visible={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="Déconnexion"
+        message="Êtes-vous sûr de vouloir vous déconnecter ?"
+        type="info"
+        confirmButton={{
+          text: "Déconnexion",
+          onPress: () => {
+            AsyncStorage.removeItem("token");
+            router.replace("/login");
+          }
+        }}
+        cancelButton={{
+          text: "Annuler",
+          onPress: () => setShowLogoutModal(false)
+        }} />
 
       <AppModal
         visible={showDeleteConfirmModal}
