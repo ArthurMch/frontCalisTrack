@@ -16,6 +16,7 @@ import CommunButton from "./CommunButton";
 import { useUserContext } from "./contexts/UserContext";
 import AppModal from "./AppModal";
 import { router } from "expo-router";
+import { authService } from "@/services/auth.service";
 
 export default function ProfileContent({ path }: { path: string }) {
   const [firstname, setFirstname] = useState("");
@@ -522,8 +523,12 @@ export default function ProfileContent({ path }: { path: string }) {
         confirmButton={{
           text: "Déconnexion",
           onPress: () => {
-            AsyncStorage.removeItem("token");
-            router.replace("/login");
+            authService.signout()
+              .catch((error) => {
+                console.error("Erreur lors de la déconnexion :", error);
+                showErrorMessage("Erreur de déconnexion", "Une erreur est survenue lors de la déconnexion.");
+              });
+            setShowLogoutModal(false);
           }
         }}
         cancelButton={{

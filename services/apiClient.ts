@@ -1,4 +1,3 @@
-// services/apiClient.ts
 import axios, {
   AxiosError,
   AxiosInstance,
@@ -6,11 +5,10 @@ import axios, {
   AxiosResponse,
 } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
-import { Alert } from "react-native";
 import Constants from "expo-constants";
+import { router } from "expo-router";
 
-// Événement global pour la déconnexion
+// Global event handler for token expiration
 export const AuthEvents = {
   onTokenExpired: null as (() => void) | null,
 };
@@ -33,7 +31,7 @@ class ApiClient {
   }
 
   private setupInterceptors(): void {
-    // Intercepteur de requête pour ajouter le token
+    // Request interceptor to add token
     this.instance.interceptors.request.use(
       async (config) => {
         const token = await AsyncStorage.getItem("token");
@@ -45,7 +43,7 @@ class ApiClient {
       (error) => Promise.reject(error)
     );
 
-    // Intercepteur de réponse pour gérer les erreurs d'authentification
+    // Response interceptor to handle authentication errors
     this.instance.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
@@ -53,34 +51,42 @@ class ApiClient {
           _retry?: boolean;
         };
 
-        // Si l'erreur est 403 Unauthorized
-        if (error.response?.status === 403) {
-          // Si nous n'avons pas déjà essayé de rafraîchir le token pour cette requête
+        // If the error is 403 Unauthorized or 401 (token expired)
+        if (error.response?.status === 403 || error.response?.status === 401) {
           if (!originalRequest._retry) {
-            // Si nous ne sommes pas déjà en train de rafraîchir
             if (!this.isRefreshing) {
               this.isRefreshing = true;
 
               try {
-                this.logout();
+                // Global token expired handler
+                if (AuthEvents.onTokenExpired) {
+                  AuthEvents.onTokenExpired();
+                }
+
+                // Clear stored tokens and user data
+                await AsyncStorage.multiRemove([
+                  "token",
+                  "refreshToken",
+                  "currentUser",
+                ]);
+
+                // Navigate to login page
+                router.replace("/login");
+
+                // Reset refreshing state
+                this.isRefreshing = false;
+
+                // Reject the original request
                 return Promise.reject(error);
               } catch (refreshError) {
+                // Reset refreshing state even in case of error
                 this.isRefreshing = false;
-                this.logout();
                 return Promise.reject(refreshError);
               }
             } else {
-              // Si nous sommes déjà en train de rafraîchir, mettre la requête en attente
-              return new Promise((resolve) => {
-                this.addSubscriber((token: string) => {
-                  originalRequest.headers = {
-                    ...originalRequest.headers,
-                    Authorization: `Bearer ${token}`,
-                  };
-                  originalRequest._retry = true;
-                  resolve(this.instance(originalRequest));
-                });
-              });
+              // For pending requests during token refresh
+              // This is a fallback, but in this case, we'll just reject
+              return Promise.reject(error);
             }
           }
         }
@@ -90,49 +96,7 @@ class ApiClient {
     );
   }
 
-  private addSubscriber(callback: (token: string) => void): void {
-    this.refreshSubscribers.push(callback);
-  }
-
-  private onRefreshed(token: string): void {
-    this.refreshSubscribers.forEach((callback) => callback(token));
-    this.refreshSubscribers = [];
-  }
-
-  private async logout(): Promise<void> {
-    try {
-      // Nettoyage du stockage
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("refreshToken");
-      await AsyncStorage.removeItem("currentUser");
-
-      // Appel de l'événement global de déconnexion
-      if (AuthEvents.onTokenExpired) {
-        AuthEvents.onTokenExpired();
-      }
-
-      // Afficher une alerte avant de rediriger
-      Alert.alert(
-        "Session expirée",
-        "Votre session a expiré. Veuillez vous reconnecter.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Redirection vers la page de login
-              router.replace("/login");
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
-      // En cas d'erreur, essayer de rediriger quand même
-      router.replace("/login");
-    }
-  }
-
-  // Méthodes d'API publiques
+  // Public API methods (GET, POST, PUT, DELETE, PATCH)
   public get<T = any>(
     url: string,
     config?: AxiosRequestConfig
@@ -172,6 +136,6 @@ class ApiClient {
   }
 }
 
-// Créer et exporter une instance avec votre URL de base
+// Create and export an instance with your base URL
 const API_BASE_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
 export const api = new ApiClient(API_BASE_URL);

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, FlatList, Modal, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text, View } from './Themed';
-import { useRouter } from 'expo-router';
 import { Exercise } from '@/models/exercise.model';
 import { Training } from '@/models/training.model';
 import { trainingService } from '@/services/training.service';
@@ -556,49 +555,72 @@ export default function TrainingContent({ path }: { path: string }) {
   );
 }
 
+const screenWidth = Dimensions.get("window").width;
+
+const colors = {
+  primary: '#4a90e2',
+  primaryDark: '#2971cc',
+  background: '#f8f9fa',
+  white: '#ffffff',
+  text: {
+    dark: '#333',
+    medium: '#666',
+    light: '#6c757d',
+  },
+  border: '#e0e0e0',
+  shadow: '#000',
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   titleContainer: {
-    marginBottom: 16,
+    width: "100%",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    backgroundColor: colors.primaryDark,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    marginBottom: 0,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#343a40',
-    marginBottom: 5,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: colors.white,
+    textAlign: "center",
+    letterSpacing: 0.5,
   },
   titleUnderline: {
+    width: 60,
     height: 3,
-    width: 50,
-    backgroundColor: '#007bff',
-    borderRadius: 2,
-  },
-  listContainer: {
-    paddingBottom: 16,
+    backgroundColor: colors.white,
+    borderRadius: 3,
+    alignSelf: "center",
+    marginTop: 8,
   },
   trainingItem: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderRadius: 10,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    marginHorizontal: 16,
+    marginVertical: 8,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
-    overflow: 'hidden',
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
   },
   trainingContent: {
-    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: 16,
   },
   trainingInfo: {
     flex: 1,
@@ -606,12 +628,12 @@ const styles = StyleSheet.create({
   trainingName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212529',
+    color: colors.text.dark,
     marginBottom: 4,
   },
   trainingDate: {
     fontSize: 14,
-    color: '#495057',
+    color: colors.text.medium,
     marginBottom: 4,
   },
   trainingStats: {
@@ -620,75 +642,102 @@ const styles = StyleSheet.create({
   },
   exerciseCount: {
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.text.light,
     marginRight: 10,
   },
   trainingDuration: {
     fontSize: 14,
-    color: '#6c757d',
-  },
-  menuButton: {
-    padding: 8,
-  },
-  menuDots: {
-    fontSize: 24,
-    color: '#6c757d',
+    color: colors.text.light,
   },
   sectionHeader: {
-    backgroundColor: '#007bff',
+    backgroundColor: colors.primary,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
     borderRadius: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 0,
+    marginHorizontal: 16,
     marginTop: 16,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   sectionHeaderText: {
-    color: '#ffffff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    color: colors.white,
   },
   toggleIcon: {
-    color: '#ffffff',
     fontSize: 16,
+    color: colors.white,
+    fontWeight: "bold",
   },
   createSectionContainer: {
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.white,
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   formInnerContainer: {
-    paddingVertical: 16,
+    padding: 16,
   },
   input: {
-    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 14,
+    marginBottom: 15,
     borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: colors.white,
     fontSize: 16,
   },
-  datePickerContainer: {
-    marginBottom: 12,
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
   },
-  datePickerLabel: {
-    fontSize: 14,
-    marginBottom: 6,
-    color: '#495057',
-  },
-  dateInput: {
-    backgroundColor: '#ffffff',
-    padding: 14,
+  addExerciseButton: {
+    flex: 1,
+    backgroundColor: colors.text.light,
+    paddingVertical: 14,
     borderRadius: 8,
+    marginRight: 8,
+    alignItems: 'center',
+  },
+  addExerciseButtonText: {
+    color: colors.white,
+    fontWeight: 'bold',
     fontSize: 16,
+  },
+  createButton: {
+    flex: 1,
+    backgroundColor: colors.primaryDark,
+    paddingVertical: 14,
+    borderRadius: 8,
+    marginLeft: 8,
+    alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  createButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   selectedExercisesContainer: {
     marginVertical: 12,
   },
   selectedExerciseTag: {
-    backgroundColor: '#dee2e6',
+    backgroundColor: colors.border,
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -699,60 +748,26 @@ const styles = StyleSheet.create({
   },
   selectedExerciseText: {
     fontSize: 14,
-    color: '#495057',
+    color: colors.text.dark,
     marginRight: 6,
   },
   removeExerciseButton: {
     width: 20,
     height: 20,
-    backgroundColor: '#adb5bd',
+    backgroundColor: colors.text.light,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   removeExerciseText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 14,
-    fontWeight: 'bold',
-  },
-  noExercisesText: {
-    color: '#6c757d',
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  addExerciseButton: {
-    flex: 1,
-    padding: 14,
-    backgroundColor: '#6c757d',
-    borderRadius: 8,
-    marginRight: 8,
-    alignItems: 'center',
-  },
-  addExerciseButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  createButton: {
-    flex: 1,
-    padding: 14,
-    backgroundColor: '#28a745',
-    borderRadius: 8,
-    marginLeft: 8,
-    alignItems: 'center',
-  },
-  createButtonText: {
-    color: '#ffffff',
     fontWeight: 'bold',
   },
   statusText: {
     textAlign: 'center',
     marginVertical: 20,
-    color: '#6c757d',
+    color: colors.text.light,
     fontStyle: 'italic',
   },
   modalContainer: {
@@ -761,7 +776,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   exercisePickerModal: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 16,
@@ -774,16 +789,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: colors.border,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212529',
+    color: colors.text.dark,
   },
   closeButton: {
     fontSize: 28,
-    color: '#6c757d',
+    color: colors.text.light,
+  },
+  exercisePickerItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  exercisePickerItemSelected: {
+    backgroundColor: '#f0f0f0',
+  },
+  exercisePickerName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text.dark,
+    marginBottom: 4,
+  },
+  exercisePickerDetails: {
+    fontSize: 14,
+    color: colors.text.light,
+  },
+  checkboxContainer: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  confirmSelectionButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  confirmSelectionText: {
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  exercisePickerItemContent: {
+    flex: 1,
   },
   noExercisesAvailable: {
     textAlign: 'center',
@@ -791,64 +852,29 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     fontStyle: 'italic',
   },
-  exercisePickerItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#dee2e6',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  exercisePickerItemSelected: {
-    backgroundColor: '#e9ecef',
-  },
-  exercisePickerItemContent: {
-    flex: 1,
-  },
-  exercisePickerName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#212529',
-    marginBottom: 4,
-  },
-  exercisePickerDetails: {
+  text: {
     fontSize: 14,
-    color: '#6c757d',
-  },
-  checkboxContainer: {
-    width: 24,
-    height: 24,
-    borderWidth: 2,
-    borderColor: '#007bff',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
+    color: colors.text.medium,
   },
   checkbox: {
     width: 18,
     height: 18,
-    backgroundColor: '#007bff',
+    backgroundColor: colors.primary,
     borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkmark: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 12,
     fontWeight: 'bold',
   },
-  confirmSelectionButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
+  menuButton: {
+    padding: 8,
   },
-  confirmSelectionText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
+  menuDots: {
+    fontSize: 24,
+    color: colors.text.light,
   },
   modalOverlay: {
     flex: 1,
@@ -858,15 +884,12 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   contextMenu: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     width: 200,
     overflow: 'hidden',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -882,13 +905,34 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    color: '#212529',
+    color: colors.text.dark,
   },
   deleteMenuItem: {
     backgroundColor: '#fff8f8',
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#dee2e6',
+    backgroundColor: colors.border,
+  },
+  datePickerContainer: {
+    marginBottom: 12,
+  },
+  datePickerLabel: {
+    fontSize: 14,
+    marginBottom: 6,
+    color: colors.text.medium,
+  },
+  dateInput: {
+    backgroundColor: colors.white,
+    padding: 14,
+    borderRadius: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  noExercisesText: {
+    color: colors.text.light,
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });

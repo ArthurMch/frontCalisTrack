@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { api } from "./apiClient";
+import { api, AuthEvents } from "./apiClient";
 import { User } from "@/models/user.model";
 import { LoginRequest } from "@/models/auth/LoginRequest";
 import { JwtResponse } from "@/models/auth/JwtResponse";
@@ -20,13 +20,27 @@ export class AuthService {
     return response.data;
   }
 
-  async logout() {
-
-    // Nettoyage local
-    await AsyncStorage.removeItem("token");
-    await AsyncStorage.removeItem("refreshToken");
-    await AsyncStorage.removeItem("currentUser");
-   
+  async signout() {
+    try {
+      await api.post(`${AUTH_ENDPOINT}/signout`);
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion côté serveur:", error);
+    } finally {
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("refreshToken");
+      await AsyncStorage.removeItem("currentUser");
+      
+      alert(
+        "Session expirée, Votre session a expiré. Veuillez vous reconnecter."
+      );
+      
+      router.replace("/login");
+    }
+  }
+  listenForTokenExpiration() {
+    AuthEvents.onTokenExpired = () => {
+      this.signout();
+    };
   }
 
   async register(user: User): Promise<void> {
@@ -39,10 +53,7 @@ export class AuthService {
       return response.data.isValid;
     } catch (error) {
       console.error("Token validation failed:", error);
-      // En cas d'erreur, on considère que le token n'est pas valide
-      await this.logout()
-
-      
+      // The interceptor will handle redirecting to login
       return false;
     }
   }
