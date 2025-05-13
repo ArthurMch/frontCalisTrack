@@ -29,11 +29,6 @@ export class AuthService {
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("currentUser");
-      
-      alert(
-        "Session expirée, Votre session a expiré. Veuillez vous reconnecter."
-      );
-      
       router.replace("/login");
     }
   }

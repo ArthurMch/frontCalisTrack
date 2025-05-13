@@ -6,6 +6,7 @@ import { ThemeProvider, DefaultTheme, DarkTheme } from '@react-navigation/native
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProvider } from '@/components/contexts/UserContext';
 import { api } from '../services/apiClient';
+import { authService } from '@/services/auth.service';
 
 export const unstable_settings = {
   initialRouteName: '(auth)',
@@ -32,7 +33,7 @@ export default function RootLayout() {
         if (token) {
           // Utilisez votre API client pour vérifier le token
           // Cela déclenchera automatiquement l'intercepteur en cas d'erreur 401
-          const isValid = await validateToken();
+          const isValid = await validateToken(token);
           setIsAuthenticated(isValid);
         } else {
           setIsAuthenticated(false);
@@ -46,11 +47,11 @@ export default function RootLayout() {
     checkAuth();
   }, []);
 
-  const validateToken = async (): Promise<boolean> => {
+  const validateToken = async (token: string): Promise<boolean> => {
     try {
       // Appel à votre endpoint de validation de token
       // L'intercepteur gérera automatiquement les erreurs 401
-      await api.get('/auth/validate-token');
+      await authService.validateToken(token);
       return true;
     } catch (error) {
       console.error('Token validation failed:', error);

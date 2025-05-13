@@ -12,7 +12,7 @@ import { useUserContext } from './contexts/UserContext';
 export default function TrainingContent({ path }: { path: string }) {
   const [trainingName, setTrainingName] = useState("");
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().split('T')[0]);
-  const [trainingDuration, setTrainingDuration] = useState("");
+  const [trainingDuration, setTrainingDuration] = useState(0);
   const [numberOfExercise, setNumberOfExercise] = useState(0);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -92,7 +92,7 @@ export default function TrainingContent({ path }: { path: string }) {
   const calculateTrainingStats = (exercises: Exercise[]) => {
     const numberOfExercise = exercises.length;
     let totalMinutesOfRest = 0;
-    
+    let totalMinutesOfTraining = 0;
     // Calculer le temps de repos total en minutes
     exercises.forEach(exercise => {
       // Supposons que chaque exercice a un temps de repos entre les séries
@@ -102,16 +102,17 @@ export default function TrainingContent({ path }: { path: string }) {
       }
     });
     
-    // Estimer le temps total d'entraînement
-    // Supposons une moyenne de 1 minute par série pour l'exécution
-    let totalMinutesOfExecution = 0;
+    if(trainingDuration == null && trainingDuration <= 0) {
+      let totalMinutesOfExecution = 0;
     exercises.forEach(exercise => {
       if (exercise.set) {
         totalMinutesOfExecution += exercise.set;
       }
     });
-    
-    const totalMinutesOfTraining = totalMinutesOfExecution + totalMinutesOfRest;
+     totalMinutesOfTraining = totalMinutesOfExecution + totalMinutesOfRest;
+    } else {
+      totalMinutesOfTraining = trainingDuration;
+    }
     
     return {
       numberOfExercise,
@@ -236,12 +237,16 @@ export default function TrainingContent({ path }: { path: string }) {
 
   const toggleExerciseSelection = (exercise: Exercise) => {
     const isSelected = selectedExercises.some(ex => ex.id === exercise.id);
-    
+  
+    let updatedExercises;
     if (isSelected) {
-      setSelectedExercises(selectedExercises.filter(ex => ex.id !== exercise.id));
+      updatedExercises = selectedExercises.filter(ex => ex.id !== exercise.id);
     } else {
-      setSelectedExercises([...selectedExercises, exercise]);
+      updatedExercises = [...selectedExercises, exercise];
     }
+  
+    setSelectedExercises(updatedExercises);
+    setNumberOfExercise(updatedExercises.length); // Met à jour le nombre d'exercices
   };
 
   const removeSelectedExercise = (exerciseId: number) => {
@@ -255,9 +260,17 @@ export default function TrainingContent({ path }: { path: string }) {
   };
 
   useEffect(() => {
-    fetchTrainings();
-    fetchExercises();
-  }, []);
+    if (currentUser && currentUser.id) {
+      fetchTrainings();
+      fetchExercises();
+    } else {
+      console.warn("Utilisateur non connecté ou ID utilisateur manquant.");
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    setNumberOfExercise(selectedExercises.length);
+  }, [selectedExercises]);
 
   return (
     <View style={styles.container}>
@@ -353,9 +366,10 @@ export default function TrainingContent({ path }: { path: string }) {
 
           <TextInput
             style={styles.input}
-            placeholder="Durée de l'entraînement (en minutes)"
-            value={trainingDuration}
-            onChangeText={setTrainingDuration}
+            placeholder="Enter a number"
+            value={String(trainingDuration)} // Convert number to string
+            onChangeText={(text) => setTrainingDuration(Number(text) || 0)} // Convert string back to number
+            keyboardType="numeric" // Ensures the numeric keyboard is displayed
           />
 
           <View>
@@ -576,6 +590,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  listContainer: {
+    paddingBottom: 16,
+    backgroundColor: colors.white,
+    borderRadius: 3,
+    alignSelf: "center",
+    marginTop: 8,
+  },
   titleContainer: {
     width: "100%",
     paddingVertical: 15,
@@ -606,7 +627,7 @@ const styles = StyleSheet.create({
   trainingItem: {
     backgroundColor: colors.white,
     borderRadius: 10,
-    marginHorizontal: 16,
+    marginHorizontal: 0,
     marginVertical: 8,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -620,7 +641,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
   },
   trainingInfo: {
     flex: 1,
