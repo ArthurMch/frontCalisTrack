@@ -15,6 +15,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useUserContext } from "@/components/contexts/UserContext";
 import { authService } from '@/services/auth.service';
+import { useEffect } from 'react';
+import { useRef } from 'react';
 import AppModal from '@/components/AppModal';
 
 
@@ -26,6 +28,7 @@ export default function LoginPage() {
   
   // État pour les messages d'erreur
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorLogin, setErrorLogin] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   // État pour le modal
   const [modal, setModal] = useState({
@@ -45,21 +48,17 @@ export default function LoginPage() {
   };
   
   const handleLogin = async () => {
-    // Réinitialiser les messages
+    
     setErrorMessage("");
     setSuccessMessage("");
-    
-    // Validation de base
     if (!email.trim()) {
       setErrorMessage("Veuillez saisir votre email");
       return;
     }
-    
     if (!password.trim()) {
       setErrorMessage("Veuillez saisir votre mot de passe");
       return;
     }
-    
     try {
       const loginRequest = { email, password };
       const response = await authService.login(loginRequest);
@@ -68,19 +67,15 @@ export default function LoginPage() {
         id: response.id,
         email: response.email,
       });
-    
        router.push("/(app)/exercise");
-      
-      
     } catch (err : any) {
       console.error("Erreur de connexion:", err);
-
       if (err && err.response && err.response.status === 403) {
-        showModal('error', 'Erreur de connexion', 'Email ou mot de passe incorrect.');
+        setErrorMessage("Email ou mot de passe incorrect.");
       } else {
         showModal('error', 'Erreur de connexion', 'Une erreur est survenue lors de la connexion.');
       }
-    }
+    } 
   };
 
   return (
@@ -134,7 +129,12 @@ export default function LoginPage() {
             secureTextEntry
             autoCapitalize="none"
           />
-          
+          {/* Affichage du message d'erreur */}
+          {errorLogin ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{errorLogin}</Text>
+            </View>
+          ) : null}
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Se connecter</Text>
           </TouchableOpacity>

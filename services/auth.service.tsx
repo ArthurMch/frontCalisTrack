@@ -10,16 +10,22 @@ const AUTH_ENDPOINT = "/api/auth";
 export class AuthService {
   
   async login(loginRequest: LoginRequest): Promise<JwtResponse> {
-    const response = await api.post<JwtResponse>(`${AUTH_ENDPOINT}/login`, loginRequest);
-    
-    // Stocker le token après la connexion
-    if (response.data.accessToken) {
-      await AsyncStorage.setItem("token", response.data.accessToken);
+    try {
+      const response = await api.post<JwtResponse>(`${AUTH_ENDPOINT}/login`, loginRequest);
+      
+      // Stocker le token après la connexion
+      if (response.data.accessToken) {
+        await AsyncStorage.setItem("token", response.data.accessToken);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de la connexion:", error);
+      
+      // Propagation explicite de l'erreur pour qu'elle soit capturée par le composant
+      throw error;
     }
-    
-    return response.data;
   }
-
   async signout() {
     try {
       await api.post(`${AUTH_ENDPOINT}/signout`);
