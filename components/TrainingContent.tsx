@@ -7,11 +7,12 @@ import { trainingService } from '@/services/training.service';
 import AppModal from './AppModal';
 import { exerciseService } from '@/services/exercise.service';
 import { useUserContext } from './contexts/UserContext';
-
+import TrainingDetails from './TrainingDetails';
+import CustomDatePicker from './CustomDatePicker';
 
 export default function TrainingContent({ path }: { path: string }) {
   const [trainingName, setTrainingName] = useState("");
-  const [trainingDate, setTrainingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [trainingDate, setTrainingDate] = useState(new Date());
   const [trainingDuration, setTrainingDuration] = useState(0);
   const [numberOfExercise, setNumberOfExercise] = useState(0);
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -24,7 +25,8 @@ export default function TrainingContent({ path }: { path: string }) {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isExercisePickerVisible, setIsExercisePickerVisible] = useState(false);
   const { currentUser } = useUserContext();
-  
+  const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+
   // État pour les modals
   const [modal, setModal] = useState({
     visible: false,
@@ -151,7 +153,7 @@ export default function TrainingContent({ path }: { path: string }) {
       await trainingService.create(newTraining);
       showModal('success', 'Succès', 'Entraînement créé avec succès !');
       setTrainingName("");
-      setTrainingDate(new Date().toISOString().split('T')[0]);
+      setTrainingDate(new Date());
       setSelectedExercises([]);
       fetchTrainings();
     } catch (error) {
@@ -169,18 +171,6 @@ export default function TrainingContent({ path }: { path: string }) {
       console.error("Erreur lors de la suppression de l'entraînement :", error);
       showModal('error', 'Erreur', 'Une erreur est survenue lors de la suppression de l\'entraînement.');
     }
-  };
-
-  const editTraining = (trainingId: number) => {
-    // Implémentation future de la modification
-    showModal('info', 'Information', 'Fonctionnalité de modification à venir.');
-    closeMenu();
-  };
-
-  const viewTrainingDetails = (trainingId: number) => {
-    // Implémentation de la vue détaillée d'un entraînement
-    showModal('info', 'Information', 'Fonctionnalité de détails à venir.');
-    closeMenu();
   };
 
   // Toggle animation for the create section
@@ -294,7 +284,7 @@ export default function TrainingContent({ path }: { path: string }) {
             <View style={styles.trainingContent}>
               <View style={styles.trainingInfo}>
                 <Text style={styles.trainingName}>{item.name}</Text>
-                <Text style={styles.trainingDate}>{formatDate(item.date)}</Text>
+                <Text style={styles.trainingDate}>{formatDate(item.date.toString())}</Text>
                 <View style={styles.trainingStats}>
                   <Text style={styles.exerciseCount}>
                     {item.numberOfExercise ?? 0} {(item.numberOfExercise ?? 0) > 1 ? 'exercices' : 'exercice'}
@@ -351,26 +341,21 @@ export default function TrainingContent({ path }: { path: string }) {
             value={trainingName}
             onChangeText={setTrainingName}
           />
-          
-          {/* Date Picker */}
-          <View style={styles.datePickerContainer}>
-            <Text style={styles.datePickerLabel}>Date de l'entraînement:</Text>
-            <TextInput
-              style={styles.dateInput}
-              placeholder="YYYY-MM-DD"
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Date :</Text>
+            <CustomDatePicker
               value={trainingDate}
-              onChangeText={setTrainingDate}
-              keyboardType="numeric"
+              onChange={(date) => {
+                console.log("Date sélectionnée:", date);
+                setTrainingDate(date);
+              }}
+              format="dd/MM/yyyy"
+              minDate={new Date(2024, 0, 1)}
+              maxDate={new Date(2024, 11, 31)}
+              style={styles.datePicker} // Ajoutez des styles personnalisés si nécessaire
             />
           </View>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Enter a number"
-            value={String(trainingDuration)} // Convert number to string
-            onChangeText={(text) => setTrainingDuration(Number(text) || 0)} // Convert string back to number
-            keyboardType="numeric" // Ensures the numeric keyboard is displayed
-          />
 
           <View>
             <Text style={styles.datePickerLabel}>Nombre d'exercise</Text>
@@ -499,23 +484,15 @@ export default function TrainingContent({ path }: { path: string }) {
             <TouchableOpacity 
               style={styles.menuItem}
               onPress={() => {
-                if (selectedTrainingId) viewTrainingDetails(selectedTrainingId);
+                if (selectedTrainingId) {
+                  setIsDetailsVisible(true);
+                  closeMenu(); 
+                }
               }}
             >
+              
               <Text style={styles.menuItemIcon}>👁️</Text>
-              <Text style={styles.menuItemText}>Voir détails</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => {
-                if (selectedTrainingId) editTraining(selectedTrainingId);
-              }}
-            >
-              <Text style={styles.menuItemIcon}>✏️</Text>
-              <Text style={styles.menuItemText}>Modifier</Text>
+              <Text style={styles.menuItemText}>Détails / Modifier</Text>
             </TouchableOpacity>
             
             <View style={styles.menuDivider} />
@@ -534,6 +511,18 @@ export default function TrainingContent({ path }: { path: string }) {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Détails de l'entraînement */}
+      {selectedTrainingId && (
+        <TrainingDetails
+          trainingId={selectedTrainingId}
+          visible={isDetailsVisible}
+          onClose={() => setIsDetailsVisible(false)}
+          onUpdate={(updatedTraining) => {
+            // Gère les mises à jour ici si nécessaire
+          }}
+        />
+      )}
 
       {/* Modals utilisant le composant AppModal */}
       <AppModal
@@ -955,5 +944,30 @@ const styles = StyleSheet.create({
     color: colors.text.light,
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  dateHelperText: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginTop: 5
+  },
+  formGroup: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#34495e'
+  },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+  },
+  datePicker: {
+    width: '100%',
+    marginTop: 5,
   },
 });
