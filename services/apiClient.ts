@@ -70,8 +70,13 @@ class ApiClient {
                   "currentUser",
                 ]);
 
+                if (
+                  typeof window !== "undefined" &&
+                  window.location.pathname !== "/login"
+                ) {
+                  router.replace("/login");
+                }
                 // Navigate to login page
-                router.replace("/login");
 
                 // Reset refreshing state
                 this.isRefreshing = false;

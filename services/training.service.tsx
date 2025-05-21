@@ -53,8 +53,8 @@ export class TrainingService {
    * @param user Les nouvelles données de l'entrainement
    * @returns L'entrainement mis à jour
    */
-  async update(id: number, training: Training): Promise<Training> {
-    const response = await api.put(`${this.BASE_PATH}${id}`, training);
+  async update(trainingId: number, training: Training): Promise<Training> {
+    const response = await api.put(`${this.BASE_PATH}${trainingId}`, training);
     return response.data;
   }
 

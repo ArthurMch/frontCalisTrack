@@ -7,12 +7,13 @@ import { trainingService } from '@/services/training.service';
 import AppModal from './AppModal';
 import { exerciseService } from '@/services/exercise.service';
 import { useUserContext } from './contexts/UserContext';
-
+import TrainingDetails from './TrainingDetails';
+import CustomDatePicker from './CustomDatePicker';
 
 export default function TrainingContent({ path }: { path: string }) {
   const [trainingName, setTrainingName] = useState("");
-  const [trainingDate, setTrainingDate] = useState(new Date().toISOString().split('T')[0]);
-  const [trainingDuration, setTrainingDuration] = useState("");
+  const [trainingDate, setTrainingDate] = useState(new Date());
+  const [trainingDuration, setTrainingDuration] = useState(0);
   const [numberOfExercise, setNumberOfExercise] = useState(0);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -24,7 +25,8 @@ export default function TrainingContent({ path }: { path: string }) {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isExercisePickerVisible, setIsExercisePickerVisible] = useState(false);
   const { currentUser } = useUserContext();
-  
+  const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+
   // État pour les modals
   const [modal, setModal] = useState({
     visible: false,
@@ -92,7 +94,7 @@ export default function TrainingContent({ path }: { path: string }) {
   const calculateTrainingStats = (exercises: Exercise[]) => {
     const numberOfExercise = exercises.length;
     let totalMinutesOfRest = 0;
-    
+    let totalMinutesOfTraining = 0;
     // Calculer le temps de repos total en minutes
     exercises.forEach(exercise => {
       // Supposons que chaque exercice a un temps de repos entre les séries
@@ -102,16 +104,17 @@ export default function TrainingContent({ path }: { path: string }) {
       }
     });
     
-    // Estimer le temps total d'entraînement
-    // Supposons une moyenne de 1 minute par série pour l'exécution
-    let totalMinutesOfExecution = 0;
+    if(trainingDuration == null && trainingDuration <= 0) {
+      let totalMinutesOfExecution = 0;
     exercises.forEach(exercise => {
       if (exercise.set) {
         totalMinutesOfExecution += exercise.set;
       }
     });
-    
-    const totalMinutesOfTraining = totalMinutesOfExecution + totalMinutesOfRest;
+     totalMinutesOfTraining = totalMinutesOfExecution + totalMinutesOfRest;
+    } else {
+      totalMinutesOfTraining = trainingDuration;
+    }
     
     return {
       numberOfExercise,
@@ -150,7 +153,7 @@ export default function TrainingContent({ path }: { path: string }) {
       await trainingService.create(newTraining);
       showModal('success', 'Succès', 'Entraînement créé avec succès !');
       setTrainingName("");
-      setTrainingDate(new Date().toISOString().split('T')[0]);
+      setTrainingDate(new Date());
       setSelectedExercises([]);
       fetchTrainings();
     } catch (error) {
@@ -168,18 +171,6 @@ export default function TrainingContent({ path }: { path: string }) {
       console.error("Erreur lors de la suppression de l'entraînement :", error);
       showModal('error', 'Erreur', 'Une erreur est survenue lors de la suppression de l\'entraînement.');
     }
-  };
-
-  const editTraining = (trainingId: number) => {
-    // Implémentation future de la modification
-    showModal('info', 'Information', 'Fonctionnalité de modification à venir.');
-    closeMenu();
-  };
-
-  const viewTrainingDetails = (trainingId: number) => {
-    // Implémentation de la vue détaillée d'un entraînement
-    showModal('info', 'Information', 'Fonctionnalité de détails à venir.');
-    closeMenu();
   };
 
   // Toggle animation for the create section
@@ -223,7 +214,6 @@ export default function TrainingContent({ path }: { path: string }) {
 
   const closeMenu = () => {
     setIsMenuVisible(false);
-    setSelectedTrainingId(null);
   };
 
   const openExercisePicker = () => {
@@ -236,12 +226,16 @@ export default function TrainingContent({ path }: { path: string }) {
 
   const toggleExerciseSelection = (exercise: Exercise) => {
     const isSelected = selectedExercises.some(ex => ex.id === exercise.id);
-    
+  
+    let updatedExercises;
     if (isSelected) {
-      setSelectedExercises(selectedExercises.filter(ex => ex.id !== exercise.id));
+      updatedExercises = selectedExercises.filter(ex => ex.id !== exercise.id);
     } else {
-      setSelectedExercises([...selectedExercises, exercise]);
+      updatedExercises = [...selectedExercises, exercise];
     }
+  
+    setSelectedExercises(updatedExercises);
+    setNumberOfExercise(updatedExercises.length); // Met à jour le nombre d'exercices
   };
 
   const removeSelectedExercise = (exerciseId: number) => {
@@ -254,10 +248,25 @@ export default function TrainingContent({ path }: { path: string }) {
     return new Date(dateString).toLocaleDateString('fr-FR', options);
   };
 
+  const loadData = () => {
+    if (currentUser && currentUser.id) {
+      fetchTrainings();
+      fetchExercises();
+    }
+  };
+
   useEffect(() => {
-    fetchTrainings();
-    fetchExercises();
-  }, []);
+    if (currentUser && currentUser.id) {
+      fetchTrainings();
+      fetchExercises();
+    } else {
+      console.warn("Utilisateur non connecté ou ID utilisateur manquant.");
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    setNumberOfExercise(selectedExercises.length);
+  }, [selectedExercises]);
 
   return (
     <View style={styles.container}>
@@ -281,7 +290,7 @@ export default function TrainingContent({ path }: { path: string }) {
             <View style={styles.trainingContent}>
               <View style={styles.trainingInfo}>
                 <Text style={styles.trainingName}>{item.name}</Text>
-                <Text style={styles.trainingDate}>{formatDate(item.date)}</Text>
+                <Text style={styles.trainingDate}>{formatDate(item.date.toString())}</Text>
                 <View style={styles.trainingStats}>
                   <Text style={styles.exerciseCount}>
                     {item.numberOfExercise ?? 0} {(item.numberOfExercise ?? 0) > 1 ? 'exercices' : 'exercice'}
@@ -338,25 +347,18 @@ export default function TrainingContent({ path }: { path: string }) {
             value={trainingName}
             onChangeText={setTrainingName}
           />
-          
-          {/* Date Picker */}
-          <View style={styles.datePickerContainer}>
-            <Text style={styles.datePickerLabel}>Date de l'entraînement:</Text>
-            <TextInput
-              style={styles.dateInput}
-              placeholder="YYYY-MM-DD"
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Date : </Text>
+            <CustomDatePicker
               value={trainingDate}
-              onChangeText={setTrainingDate}
-              keyboardType="numeric"
+              onChange={setTrainingDate}
+              format="dd/MM/yyyy"
+              minDate={new Date(1990, 0, 1)}
+              maxDate={new Date(2026, 11, 31)}
+              style={styles.datePicker}
             />
           </View>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Durée de l'entraînement (en minutes)"
-            value={trainingDuration}
-            onChangeText={setTrainingDuration}
-          />
 
           <View>
             <Text style={styles.datePickerLabel}>Nombre d'exercise</Text>
@@ -485,23 +487,15 @@ export default function TrainingContent({ path }: { path: string }) {
             <TouchableOpacity 
               style={styles.menuItem}
               onPress={() => {
-                if (selectedTrainingId) viewTrainingDetails(selectedTrainingId);
+                if (selectedTrainingId) {
+                  setIsDetailsVisible(true);
+                  setIsMenuVisible(false); 
+                }
               }}
             >
+              
               <Text style={styles.menuItemIcon}>👁️</Text>
-              <Text style={styles.menuItemText}>Voir détails</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => {
-                if (selectedTrainingId) editTraining(selectedTrainingId);
-              }}
-            >
-              <Text style={styles.menuItemIcon}>✏️</Text>
-              <Text style={styles.menuItemText}>Modifier</Text>
+              <Text style={styles.menuItemText}>Détails / Modifier</Text>
             </TouchableOpacity>
             
             <View style={styles.menuDivider} />
@@ -520,6 +514,21 @@ export default function TrainingContent({ path }: { path: string }) {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Détails de l'entraînement */}
+      {selectedTrainingId && (
+        <TrainingDetails
+          trainingId={selectedTrainingId}
+          visible={isDetailsVisible}
+          onClose={() => {
+            setIsDetailsVisible(false);
+            loadData(); // Recharge la liste à la fermeture
+          }}
+          onUpdate={(updatedTraining) => {
+            loadData(); // Recharge après une mise à jour
+          }}
+        />
+      )}
 
       {/* Modals utilisant le composant AppModal */}
       <AppModal
@@ -576,6 +585,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  listContainer: {
+    paddingBottom: 16,
+    backgroundColor: colors.white,
+    borderRadius: 3,
+    alignSelf: "center",
+    marginTop: 8,
+  },
   titleContainer: {
     width: "100%",
     paddingVertical: 15,
@@ -606,7 +622,7 @@ const styles = StyleSheet.create({
   trainingItem: {
     backgroundColor: colors.white,
     borderRadius: 10,
-    marginHorizontal: 16,
+    marginHorizontal: 0,
     marginVertical: 8,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -620,7 +636,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
   },
   trainingInfo: {
     flex: 1,
@@ -934,5 +950,31 @@ const styles = StyleSheet.create({
     color: colors.text.light,
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  dateHelperText: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginTop: 5
+  },
+  formGroup: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#34495e'
+  },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+  },
+  datePicker: {
+    marginLeft: 50,
+    width: '100%',
+    marginTop: 5,
   },
 });

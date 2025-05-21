@@ -1,3 +1,5 @@
+import 'react-datepicker/dist/react-datepicker.css';
+import '@/global.css';
 import { Stack } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 
