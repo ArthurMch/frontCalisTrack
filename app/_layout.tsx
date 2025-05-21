@@ -1,3 +1,5 @@
+import 'react-datepicker/dist/react-datepicker.css';
+import '@/global.css';
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -5,8 +7,8 @@ import { useColorScheme } from 'react-native';
 import { ThemeProvider, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProvider } from '@/components/contexts/UserContext';
-import { api } from '../services/apiClient';
 import { authService } from '@/services/auth.service';
+
 
 export const unstable_settings = {
   initialRouteName: '(auth)',

@@ -1,10 +1,9 @@
+import 'react-datepicker/dist/react-datepicker.css';
+import '@/global.css';
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -20,7 +19,6 @@ function TabBarIcon(props: {
 }
 
 export default function TabsLayout() {
-  const colorScheme = useColorScheme();
   const activeColor = '#4a90e2'; 
   const inactiveColor = '#8E8E93';
 

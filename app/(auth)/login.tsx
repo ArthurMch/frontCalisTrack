@@ -73,6 +73,7 @@ export default function LoginPage() {
       if (err && err.response && err.response.status === 403) {
         setErrorMessage("Email ou mot de passe incorrect.");
       } else {
+        setErrorMessage("Une erreur est survenue lors de la connexion.");
         showModal('error', 'Erreur de connexion', 'Une erreur est survenue lors de la connexion.');
       }
     } 

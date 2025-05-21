@@ -214,7 +214,6 @@ export default function TrainingContent({ path }: { path: string }) {
 
   const closeMenu = () => {
     setIsMenuVisible(false);
-    setSelectedTrainingId(null);
   };
 
   const openExercisePicker = () => {
@@ -247,6 +246,13 @@ export default function TrainingContent({ path }: { path: string }) {
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('fr-FR', options);
+  };
+
+  const loadData = () => {
+    if (currentUser && currentUser.id) {
+      fetchTrainings();
+      fetchExercises();
+    }
   };
 
   useEffect(() => {
@@ -343,17 +349,14 @@ export default function TrainingContent({ path }: { path: string }) {
           />
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Date :</Text>
+            <Text style={styles.label}>Date : </Text>
             <CustomDatePicker
               value={trainingDate}
-              onChange={(date) => {
-                console.log("Date sélectionnée:", date);
-                setTrainingDate(date);
-              }}
+              onChange={setTrainingDate}
               format="dd/MM/yyyy"
-              minDate={new Date(2024, 0, 1)}
-              maxDate={new Date(2024, 11, 31)}
-              style={styles.datePicker} // Ajoutez des styles personnalisés si nécessaire
+              minDate={new Date(1990, 0, 1)}
+              maxDate={new Date(2026, 11, 31)}
+              style={styles.datePicker}
             />
           </View>
 
@@ -486,7 +489,7 @@ export default function TrainingContent({ path }: { path: string }) {
               onPress={() => {
                 if (selectedTrainingId) {
                   setIsDetailsVisible(true);
-                  closeMenu(); 
+                  setIsMenuVisible(false); 
                 }
               }}
             >
@@ -517,9 +520,12 @@ export default function TrainingContent({ path }: { path: string }) {
         <TrainingDetails
           trainingId={selectedTrainingId}
           visible={isDetailsVisible}
-          onClose={() => setIsDetailsVisible(false)}
+          onClose={() => {
+            setIsDetailsVisible(false);
+            loadData(); // Recharge la liste à la fermeture
+          }}
           onUpdate={(updatedTraining) => {
-            // Gère les mises à jour ici si nécessaire
+            loadData(); // Recharge après une mise à jour
           }}
         />
       )}
@@ -967,6 +973,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   datePicker: {
+    marginLeft: 50,
     width: '100%',
     marginTop: 5,
   },

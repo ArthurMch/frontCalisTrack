@@ -1,0 +1,6 @@
+body { background: #b92c2c !important; }
+
+.react-datepicker-popper,
+.react-datepicker {
+  z-index: 2147483647 !important; /* valeur maximale */
+}

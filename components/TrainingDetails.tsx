@@ -4,6 +4,8 @@ import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, Modal } 
 import { Training } from '@/models/training.model';
 import AppModal from './AppModal';
 import { useUserContext } from './contexts/UserContext';
+import CustomDatePicker from './CustomDatePicker';
+import '@/global.css';
 
   /**
    * Composant pour afficher les détails d'un entraînement
@@ -184,13 +186,14 @@ import { useUserContext } from './contexts/UserContext';
   
                     <View style={styles.formGroup}>
                       <Text style={styles.label}>Date:</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={formatDateForInput(editedDate)}
-                        onChangeText={(text) => setEditedDate(parseDateFromInput(text))}
-                        placeholder="AAAA-MM-JJ"
+                      <CustomDatePicker
+                        value={editedDate}
+                        onChange={setEditedDate}
+                        format="yyyy-MM-dd"
+                        minDate={new Date(2000, 0, 1)}
+                        maxDate={new Date(2100, 11, 31)}
+                        style={styles.datePicker}
                       />
-                      <Text style={styles.dateHelperText}>Format: AAAA-MM-JJ</Text>
                     </View>
   
                     <View style={styles.formGroup}>
@@ -447,5 +450,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#7f8c8d',
     marginTop: 5
+  },
+  datePicker: {
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 8,
+      padding: 10,
+      fontSize: 16,
+      marginLeft: 50,
   }
 });

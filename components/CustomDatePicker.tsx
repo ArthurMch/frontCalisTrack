@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import 'react-datepicker/dist/react-datepicker.css';
+import '@/global.css';
+import React, { useState, useEffect, JSX } from 'react';
 import {
   View,
   Text,
@@ -6,8 +8,17 @@ import {
   Modal,
   ScrollView,
   Platform,
-  StyleSheet
+  StyleSheet,
+  ViewStyle,
+  TextStyle
 } from 'react-native';
+
+const isWeb = Platform.OS === 'web';
+let ReactDatePicker: any = null;
+if (isWeb) {
+  // @ts-ignore
+  ReactDatePicker = require('react-datepicker').default;
+}
 
 interface CustomDatePickerProps {
   value?: Date;
@@ -16,21 +27,15 @@ interface CustomDatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   disabled?: boolean;
-  style?: any; // ViewStyle de React Native
+  style?: ViewStyle;
 }
 
-/**
- * Interface pour un objet date affiché dans le calendrier
- */
 interface CalendarDateObject {
   date: Date;
   isCurrentMonth: boolean;
   isSelectable: boolean;
 }
 
-/**
- * Composant DatePicker personnalisé compatible web et mobile
- */
 const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   value = new Date(),
   onChange,
@@ -44,9 +49,6 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date(selectedDate));
   const [displayedDates, setDisplayedDates] = useState<CalendarDateObject[]>([]);
-  
-  // Pour gérer différemment sur web et mobile
-  const isWeb = Platform.OS === 'web';
 
   useEffect(() => {
     generateCalendarDates();
@@ -57,18 +59,11 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     setCurrentMonth(new Date(value || new Date()));
   }, [value]);
 
-  // Log pour voir si le changement d'état de modalVisible est effectif
-  useEffect(() => {
-    console.log("Modal visible state changed:", modalVisible);
-  }, [modalVisible]);
-
   const formatDate = (date: Date): string => {
     if (!date) return '';
-    
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
-    
     return format
       .replace('dd', day)
       .replace('MM', month)
@@ -78,41 +73,27 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   const generateCalendarDates = (): void => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    
-    // Premier jour du mois
     const firstDay = new Date(year, month, 1);
-    // Dernier jour du mois
     const lastDay = new Date(year, month + 1, 0);
-    
-    // Déterminer le premier jour à afficher (peut être du mois précédent)
     const startDay = new Date(firstDay);
     startDay.setDate(startDay.getDate() - firstDay.getDay());
-    
-    const dates: CalendarDateObject[] = [];
-    const totalDays = 42; // 6 semaines complètes
-    
+    const dates = [];
+    const totalDays = 42;
     for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(startDay);
       currentDate.setDate(startDay.getDate() + i);
-      
-      // Déterminer si la date est dans le mois actuel
       const isCurrentMonth = currentDate.getMonth() === month;
-      
-      // Déterminer si la date est sélectionnable (entre min et max)
       const minDateCopy = new Date(minDate);
       const maxDateCopy = new Date(maxDate);
-      
-      const isSelectable = 
-        currentDate >= new Date(minDateCopy.setHours(0, 0, 0, 0)) && 
+      const isSelectable =
+        currentDate >= new Date(minDateCopy.setHours(0, 0, 0, 0)) &&
         currentDate <= new Date(maxDateCopy.setHours(23, 59, 59, 999));
-      
       dates.push({
         date: new Date(currentDate),
         isCurrentMonth,
         isSelectable
       });
     }
-    
     setDisplayedDates(dates);
   };
 
@@ -124,45 +105,14 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
 
   const handleDateSelection = (date: Date): void => {
     setSelectedDate(date);
-    
     if (onChange) {
       onChange(date);
     }
-    
-    // Fermer le modal après sélection
     setModalVisible(false);
-  };
-
-  const openDatePicker = (): void => {
-    console.log("openDatePicker called, disabled:", disabled);
-    if (!disabled) {
-      if (isWeb) {
-        // Sur le web, on utilise directement l'input natif en arrière-plan
-        const input = document.getElementById('native-date-input');
-        if (input) {
-          (input as HTMLInputElement).click();
-        }
-      } else {
-        // Sur mobile, on ouvre notre modal personnalisé
-        console.log("Tentative d'ouverture du modal...");
-        
-        // Force update using a setTimeout
-        setTimeout(() => {
-          console.log("Setting modalVisible dans setTimeout");
-          setModalVisible(true);
-        }, 0);
-      }
-    }
-  };
-
-  const handleWebDateChange = (e: any): void => {
-    const selectedDateFromInput = new Date(e.target.value);
-    handleDateSelection(selectedDateFromInput);
   };
 
   const isDateSelected = (date: Date): boolean => {
     if (!selectedDate) return false;
-    
     return (
       date.getDate() === selectedDate.getDate() &&
       date.getMonth() === selectedDate.getMonth() &&
@@ -175,11 +125,9 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
       <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.arrowButton}>
         <Text style={styles.arrowText}>←</Text>
       </TouchableOpacity>
-      
       <Text style={styles.monthTitle}>
         {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
       </Text>
-      
       <TouchableOpacity onPress={() => changeMonth(1)} style={styles.arrowButton}>
         <Text style={styles.arrowText}>→</Text>
       </TouchableOpacity>
@@ -188,7 +136,6 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
 
   const renderDaysOfWeek = (): JSX.Element => {
     const daysOfWeek: string[] = ['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'];
-    
     return (
       <View style={styles.daysOfWeekRow}>
         {daysOfWeek.map((day, index) => (
@@ -201,20 +148,17 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   };
 
   const renderCalendarDates = (): JSX.Element => {
-    // Diviser les dates en rangées de 7 (une semaine)
     const rows: CalendarDateObject[][] = [];
     for (let i = 0; i < displayedDates.length; i += 7) {
       const week = displayedDates.slice(i, i + 7);
       rows.push(week);
     }
-    
     return (
       <View style={styles.calendarGrid}>
         {rows.map((week, rowIndex) => (
           <View key={`week-${rowIndex}`} style={styles.weekRow}>
             {week.map((dateObj, colIndex) => {
               const isSelected = isDateSelected(dateObj.date);
-              
               return (
                 <TouchableOpacity
                   key={`date-${rowIndex}-${colIndex}`}
@@ -248,66 +192,79 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     );
   };
 
+  // Rendu pour le web avec react-datepicker
+  if (isWeb && ReactDatePicker) {
+    return (
+      <div style={{ width: '100%', ...(Object.fromEntries(Object.entries(style).filter(([_, v]) => v !== null))) }}>
+        <ReactDatePicker
+          selected={selectedDate}
+          onChange={(date: Date) => {
+            setSelectedDate(date);
+            onChange(date);
+          }}
+          dateFormat={format.replace('yyyy', 'yyyy').replace('dd', 'dd').replace('MM', 'MM')}
+          minDate={minDate}
+          maxDate={maxDate}
+          disabled={disabled}
+          portalId="datepicker-portal"
+          customInput={
+            <button
+              style={{
+                width: '100%',
+                backgroundColor: disabled ? '#e0e0e0' : '#f0f0f0',
+                padding: 15,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: '#ccc',
+                justifyContent: 'center',
+                fontSize: 16,
+                color: disabled ? '#999' : '#333',
+                cursor: disabled ? 'not-allowed' : 'pointer'
+              }}
+              disabled={disabled}
+            >
+              {selectedDate ? formatDate(selectedDate) : 'Sélectionner une date'}
+            </button>
+          }
+        />
+      </div>
+    );
+  }
+
+  // Rendu mobile (modal custom)
   return (
     <View style={[styles.container, style]}>
-      {/* Interface visible */}
       <TouchableOpacity
         style={[styles.pickerButton, disabled && styles.disabledButton]}
-        onPress={openDatePicker}
+        onPress={() => setModalVisible(true)}
         disabled={disabled}
       >
         <Text style={[styles.dateDisplay, disabled && styles.disabledText]}>
           {selectedDate ? formatDate(selectedDate) : 'Sélectionner une date'}
         </Text>
       </TouchableOpacity>
-
-      {/* Support pour le web via input HTML natif (caché) */}
-      {isWeb && (
-        <input
-          id="native-date-input"
-          type="date"
-          value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
-          onChange={handleWebDateChange}
-          min={minDate.toISOString().split('T')[0]}
-          max={maxDate.toISOString().split('T')[0]}
-          disabled={disabled}
-          style={{ display: 'none' }}
-        />
-      )}
-
-      {/* Rendu conditionnel du Modal pour éviter les problèmes potentiels */}
-      {Platform.OS !== 'web' && (
+      {!isWeb && (
         <Modal
           visible={modalVisible}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => {
-            console.log("Modal onRequestClose");
-            setModalVisible(false);
-          }}
+          onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Sélectionnez une date</Text>
-                <TouchableOpacity 
-                  onPress={() => {
-                    console.log("Fermeture du modal (bouton X)");
-                    setModalVisible(false);
-                  }}
-                >
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
                   <Text style={styles.closeButton}>×</Text>
                 </TouchableOpacity>
               </View>
-  
               <ScrollView contentContainerStyle={styles.calendarContainer}>
                 {renderCalendarHeader()}
                 {renderDaysOfWeek()}
                 {renderCalendarDates()}
               </ScrollView>
-  
               <View style={styles.modalFooter}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.todayButton}
                   onPress={() => {
                     const today = new Date();
@@ -317,13 +274,9 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                 >
                   <Text style={styles.todayButtonText}>Aujourd'hui</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={() => {
-                    console.log("Fermeture du modal (bouton annuler)");
-                    setModalVisible(false);
-                  }}
+                  onPress={() => setModalVisible(false)}
                 >
                   <Text style={styles.cancelButtonText}>Annuler</Text>
                 </TouchableOpacity>
@@ -336,162 +289,154 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginBottom: 10,
-  },
+  } as ViewStyle,
   pickerButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    backgroundColor: '#fff',
-  },
-  disabledButton: {
-    backgroundColor: '#f0f0f0',
-    borderColor: '#ddd',
-  },
+    justifyContent: 'center',
+  } as ViewStyle,
   dateDisplay: {
     fontSize: 16,
-    color: '#333',
-  },
+  } as TextStyle,
+  disabledButton: {
+    backgroundColor: '#e0e0e0',
+    opacity: 0.7,
+  } as ViewStyle,
   disabledText: {
     color: '#999',
-  },
+  } as TextStyle,
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-  },
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  } as ViewStyle,
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 10,
     width: '90%',
     maxWidth: 400,
-    maxHeight: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
     overflow: 'hidden',
-  },
+  } as ViewStyle,
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
+    borderBottomColor: '#e0e0e0',
+  } as ViewStyle,
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-  },
+  } as TextStyle,
   closeButton: {
     fontSize: 24,
-    color: '#666',
-    padding: 5,
-  },
+    fontWeight: 'bold',
+  } as TextStyle,
   calendarContainer: {
     padding: 10,
-  },
+  } as ViewStyle,
   calendarHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
     paddingHorizontal: 5,
-  },
-  arrowButton: {
-    padding: 8,
-  },
-  arrowText: {
-    fontSize: 18,
-    color: '#007bff',
-  },
+  } as ViewStyle,
   monthTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
-  },
+  } as TextStyle,
+  arrowButton: {
+    padding: 10,
+  } as ViewStyle,
+  arrowText: {
+    fontSize: 20,
+  } as TextStyle,
   daysOfWeekRow: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
     marginBottom: 10,
-  },
+  } as ViewStyle,
   dayOfWeekCell: {
     flex: 1,
     alignItems: 'center',
-    padding: 5,
-  },
+  } as ViewStyle,
   dayOfWeekText: {
-    fontSize: 14,
-    color: '#666',
     fontWeight: 'bold',
-  },
+    fontSize: 14,
+  } as TextStyle,
   calendarGrid: {
     marginBottom: 10,
-  },
+  } as ViewStyle,
   weekRow: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
     marginBottom: 5,
-  },
+  } as ViewStyle,
   dateCell: {
-    flex: 1,
-    aspectRatio: 1,
-    alignItems: 'center',
+    width: 40,
+    height: 40,
     justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 20,
-  },
+  } as ViewStyle,
   dateText: {
     fontSize: 14,
-    color: '#333',
-  },
+  } as TextStyle,
   differentMonthDate: {
     opacity: 0.4,
-  },
+  } as ViewStyle,
   differentMonthText: {
     color: '#999',
-  },
+  } as TextStyle,
   disabledDate: {
     opacity: 0.3,
-  },
+  } as ViewStyle,
   disabledDateText: {
-    color: '#ccc',
-  },
+    color: '#aaa',
+  } as TextStyle,
   selectedDate: {
     backgroundColor: '#007bff',
-  },
+  } as ViewStyle,
   selectedDateText: {
     color: 'white',
     fontWeight: 'bold',
-  },
+  } as TextStyle,
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 15,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
+    borderTopColor: '#e0e0e0',
+  } as ViewStyle,
   todayButton: {
-    paddingVertical: 8,
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
     paddingHorizontal: 15,
-    backgroundColor: '#e0e0e0',
     borderRadius: 5,
-  },
+  } as ViewStyle,
   todayButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    backgroundColor: '#f44336',
-    borderRadius: 5,
-  },
-  cancelButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
+  } as TextStyle,
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  } as ViewStyle,
+  cancelButtonText: {
+    color: '#333',
+  } as TextStyle,
 });
-
+ 
 export default CustomDatePicker;
