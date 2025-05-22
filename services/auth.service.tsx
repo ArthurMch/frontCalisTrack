@@ -54,7 +54,7 @@ export class AuthService {
       return response.data.isValid;
     } catch (error) {
       console.error("Token validation failed:", error);
-      // The interceptor will handle redirecting to login
+      router.replace("/login");
       return false;
     }
   }
