@@ -1,5 +1,5 @@
 import { User } from "@/models/user.model";
-import { userService, UserService } from "@/services/user.service";
+import { userService } from "@/services/user.service";
 import { useEffect, useState } from "react";
 import { 
   View, 
@@ -17,6 +17,7 @@ import { useUserContext } from "./contexts/UserContext";
 import AppModal from "./AppModal";
 import { router } from "expo-router";
 import { authService } from "@/services/auth.service";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProfileContent({ path }: { path: string }) {
   const [firstname, setFirstname] = useState("");
@@ -32,6 +33,7 @@ export default function ProfileContent({ path }: { path: string }) {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const insets = useSafeAreaInsets();
   
   // États pour les modals
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -326,15 +328,19 @@ export default function ProfileContent({ path }: { path: string }) {
 
   if (loading) {
     return (
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4a90e2" />
         <Text style={styles.loadingText}>Chargement de votre profil...</Text>
       </View>
+      </SafeAreaView>
     );
   }
 
   return (
+    
     <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
@@ -550,8 +556,9 @@ export default function ProfileContent({ path }: { path: string }) {
           text: "Annuler",
           onPress: () => setShowDeleteConfirmModal(false)
         }}
-      />
+      /></SafeAreaView>
     </ScrollView>
+    
   );
 }
 
@@ -564,13 +571,12 @@ const styles = StyleSheet.create({
     width: screenWidth ,
     alignSelf: "center",
     backgroundColor: "#f5f5f5",
-    borderRadius: 12,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
     elevation: 4,
-    margin: 10,
+    margin: 0,
     overflow: "hidden",
   },
   header: {

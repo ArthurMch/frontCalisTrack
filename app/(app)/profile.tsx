@@ -1,21 +1,11 @@
 import ProfileContent from "@/components/ProfileContent";
-import { View, Text } from "@/components/Themed";
-import { FontAwesome } from "@expo/vector-icons";
-import { StyleSheet } from "react-native";
+import { View } from "@/components/Themed";
 
 export default function ProfileScreen() {
     return (
-        <View style={styles.container}>
+        <View >
  <ProfileContent path="components/ProfileContent.tsx" />
         </View>
     )
 }
 
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

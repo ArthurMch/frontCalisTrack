@@ -14,6 +14,9 @@ import {
 import { exerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
 import AppModal from "@/components/AppModal"; 
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUserContext } from "./contexts/UserContext";
+
 
 export default function ExerciseContent({ path }: { path: string }) {
   const [name, setName] = useState("");
@@ -26,7 +29,8 @@ export default function ExerciseContent({ path }: { path: string }) {
   const [isCreateSectionVisible, setIsCreateSectionVisible] = useState(true);
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
- 
+  const insets = useSafeAreaInsets();
+  const { currentUser } = useUserContext();
   
   // État pour les modals
   const [modal, setModal] = useState({
@@ -48,7 +52,7 @@ export default function ExerciseContent({ path }: { path: string }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await exerciseService.findAll();
+      const data = await exerciseService.findAllById(currentUser!.id);
       if (!data || data.length === 0) {
         setExercises([]);
         setError("Aucun exercice disponible.");
@@ -173,12 +177,13 @@ export default function ExerciseContent({ path }: { path: string }) {
   }, []);
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
     <View style={styles.container}>
       {/* Liste des exercices */}
-      <View style={styles.titleContainer}>
+  <View style={styles.titleContainer}>
   <Text style={styles.sectionTitle}>Liste des exercices</Text>
   <View style={styles.titleUnderline} />
-</View>
+  </View>
       {loading && <Text style={styles.statusText}>Chargement des exercices...</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
       {!loading && !error && exercises.length === 0 && (
@@ -350,6 +355,7 @@ export default function ExerciseContent({ path }: { path: string }) {
         }}
       />
     </View>
+    </SafeAreaView>
   );
 }
 

@@ -30,8 +30,8 @@ export class ExerciseService {
    * @param id ID de l'exercice
    * @returns L'exercice trouvé
    */
-  async findById(id: number): Promise<Exercise> {
-    const response = await api.get(`${this.BASE_PATH}${id}`);
+  async findAllById(id: number): Promise<Exercise[]> {
+    const response = await api.get(`${this.BASE_PATH + "user/"}${id}`);
     return response.data;
   }
 

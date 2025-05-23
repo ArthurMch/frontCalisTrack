@@ -8,6 +8,7 @@ import { ThemeProvider, DefaultTheme, DarkTheme } from '@react-navigation/native
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProvider } from '@/components/contexts/UserContext';
 import { authService } from '@/services/auth.service';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 export const unstable_settings = {
@@ -67,6 +68,7 @@ export default function RootLayout() {
   }
 
   return (
+    <SafeAreaProvider>
     <UserProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
@@ -75,7 +77,6 @@ export default function RootLayout() {
               name="(app)" 
               options={{ 
                 headerShown: false,
-                // Empêcher le retour aux écrans d'authentification
                 gestureEnabled: false 
               }} 
             />
@@ -90,5 +91,6 @@ export default function RootLayout() {
         </Stack>
       </ThemeProvider>
     </UserProvider>
+    </SafeAreaProvider>
   );
 }
