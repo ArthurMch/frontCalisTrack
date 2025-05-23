@@ -67,20 +67,20 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 75,
+    height: 110,
     backgroundColor: '#ffffff',
-    borderTopWidth: 0,
+    borderTopWidth: 2,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    padding: 5,
-    paddingTop: 10,
+    borderColor: 'rgba(0, 0, 0, 0.24)',
   },
   tabLabel: {
     fontSize: 12,
     fontWeight: '500',
+    marginTop: 15,
   },
   iconContainer: {
     width: 44,
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 2,
+    marginTop: 20,
   },
   iconContainerFocused: {
     backgroundColor: 'rgba(74, 144, 226, 0.1)', 

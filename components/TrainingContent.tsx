@@ -9,6 +9,7 @@ import { exerciseService } from '@/services/exercise.service';
 import { useUserContext } from './contexts/UserContext';
 import TrainingDetails from './TrainingDetails';
 import CustomDatePicker from './CustomDatePicker';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TrainingContent({ path }: { path: string }) {
   const [trainingName, setTrainingName] = useState("");
@@ -26,6 +27,7 @@ export default function TrainingContent({ path }: { path: string }) {
   const [isExercisePickerVisible, setIsExercisePickerVisible] = useState(false);
   const { currentUser } = useUserContext();
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   // État pour les modals
   const [modal, setModal] = useState({
@@ -204,7 +206,7 @@ export default function TrainingContent({ path }: { path: string }) {
   // Calculate the height of the animated container
   const maxHeight = animatedHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 500], // Ajusté pour le contenu du formulaire d'entraînement (+ place pour le date picker)
+    outputRange: [0, 458], // Ajusté pour le contenu du formulaire d'entraînement (+ place pour le date picker)
   });
 
   const openMenu = (trainingId: number) => {
@@ -269,54 +271,18 @@ export default function TrainingContent({ path }: { path: string }) {
   }, [selectedExercises]);
 
   return (
-    <View style={styles.container}>
-      {/* Liste des entraînements */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.sectionTitle}>Liste des entraînements</Text>
+  <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+  <View style={[styles.container]}>
+
+
+      {/* Titre de la liste des entraînements avec le même style que le bouton création */}
+      <View style={styles.listTitle}>
+        <Text style={styles.listTextTitle}>Liste des entraînements</Text>
         <View style={styles.titleUnderline} />
       </View>
-      
-      {loading && <Text style={styles.statusText}>Chargement des entraînements...</Text>}
-      {error && <Text style={styles.statusText}>{error}</Text>}
-      {!loading && !error && trainings.length === 0 && (
-        <Text style={styles.statusText}>Aucun entraînement disponible.</Text>
-      )}
 
-      <FlatList
-        data={trainings}
-        keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
-        renderItem={({ item }) => (
-          <View style={styles.trainingItem}>
-            <View style={styles.trainingContent}>
-              <View style={styles.trainingInfo}>
-                <Text style={styles.trainingName}>{item.name}</Text>
-                <Text style={styles.trainingDate}>{formatDate(item.date.toString())}</Text>
-                <View style={styles.trainingStats}>
-                  <Text style={styles.exerciseCount}>
-                    {item.numberOfExercise ?? 0} {(item.numberOfExercise ?? 0) > 1 ? 'exercices' : 'exercice'}
-                  </Text>
-                  <Text style={styles.trainingDuration}>
-                    {item.totalMinutesOfTraining} min (dont {item.totalMinutesOfRest} min de repos)
-                  </Text>
-                </View>
-              </View>
-              
-              {/* Options menu button */}
-              <TouchableOpacity 
-                style={styles.menuButton}
-                onPress={() => openMenu(item.id!)}
-              >
-                <Text style={styles.menuDots}>⋮</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        contentContainerStyle={styles.listContainer}
-        keyboardShouldPersistTaps="handled"
-      />
-
-      {/* Section header with toggle button */}
-      <TouchableOpacity
+            {/* Section header with toggle button */}
+            <TouchableOpacity
         style={[
           styles.sectionHeader,
           {
@@ -329,7 +295,7 @@ export default function TrainingContent({ path }: { path: string }) {
       >
         <Text style={styles.sectionHeaderText}>Créer un entraînement</Text>
         <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
-          <Text style={styles.toggleIcon}>▲</Text>
+          <Text style={styles.toggleIcon}>▼</Text>
         </Animated.View>
       </TouchableOpacity>
 
@@ -360,7 +326,18 @@ export default function TrainingContent({ path }: { path: string }) {
             />
           </View>
 
-          <View>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Durée totale (minutes) :</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Durée de l'entraînement"
+              keyboardType="numeric"
+              value={trainingDuration ? String(trainingDuration) : ""}
+              onChangeText={text => setTrainingDuration(Number(text))}
+            />
+          </View>
+
+          <View style={styles.formNumberOFExercise}>
             <Text style={styles.datePickerLabel}>Nombre d'exercise</Text>
             <Text style={styles.datePickerLabel}>{numberOfExercise}</Text>
           </View>
@@ -405,6 +382,45 @@ export default function TrainingContent({ path }: { path: string }) {
           </View>
         </View>
       </Animated.View>
+      
+      {loading && <Text style={styles.statusText}>Chargement des entraînements...</Text>}
+      {error && <Text style={styles.statusText}>{error}</Text>}
+      {!loading && !error && trainings.length === 0 && (
+        <Text style={styles.statusText}>Aucun entraînement disponible.</Text>
+      )}
+
+      <FlatList
+        data={trainings}
+        keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
+        renderItem={({ item }) => (
+          <View style={styles.trainingItem}>
+            <View style={styles.trainingContent}>
+              <View style={styles.trainingInfo}>
+                <Text style={styles.trainingName}>{item.name}</Text>
+                <Text style={styles.trainingDate}>{formatDate(item.date.toString())}</Text>
+                <View style={styles.trainingStats}>
+                  <Text style={styles.exerciseCount}>
+                    {item.numberOfExercise ?? 0} {(item.numberOfExercise ?? 0) > 1 ? 'exercices' : 'exercice'}
+                  </Text>
+                  <Text style={styles.trainingDuration}>
+                    {item.totalMinutesOfTraining} min (dont {item.totalMinutesOfRest} min de repos)
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Options menu button */}
+              <TouchableOpacity 
+                style={styles.menuButton}
+                onPress={() => openMenu(item.id!)}
+              >
+                <Text style={styles.menuDots}>⋮</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        contentContainerStyle={styles.listContainer}
+        keyboardShouldPersistTaps="handled"
+      />
 
       {/* Modal pour sélectionner des exercices */}
       <Modal
@@ -561,6 +577,7 @@ export default function TrainingContent({ path }: { path: string }) {
         }}
       />
     </View>
+    </SafeAreaView>
   );
 }
 
@@ -569,7 +586,7 @@ const screenWidth = Dimensions.get("window").width;
 const colors = {
   primary: '#4a90e2',
   primaryDark: '#2971cc',
-  background: '#f8f9fa',
+  background: '#f5f5f5',
   white: '#ffffff',
   text: {
     dark: '#333',
@@ -586,10 +603,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   listContainer: {
-    paddingBottom: 16,
-    backgroundColor: colors.white,
+    paddingBottom: 0,
+    backgroundColor: colors.background,
     borderRadius: 3,
-    alignSelf: "center",
     marginTop: 8,
   },
   titleContainer: {
@@ -622,7 +638,7 @@ const styles = StyleSheet.create({
   trainingItem: {
     backgroundColor: colors.white,
     borderRadius: 10,
-    marginHorizontal: 0,
+    marginHorizontal: 8,
     marginVertical: 8,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -631,15 +647,21 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
+    width: '95%',
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   trainingContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
+    backgroundColor: colors.white,
+    padding: 10,
   },
   trainingInfo: {
     flex: 1,
+    backgroundColor: colors.white,
   },
   trainingName: {
     fontSize: 18,
@@ -655,6 +677,7 @@ const styles = StyleSheet.create({
   trainingStats: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    backgroundColor: colors.white,
   },
   exerciseCount: {
     fontSize: 14,
@@ -672,13 +695,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderRadius: 10,
-    marginHorizontal: 16,
-    marginTop: 16,
+    marginHorizontal: 10,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+    marginTop: 10,
+  },
+  listTitle: {
+    width: "100%",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    backgroundColor: "#2971cc",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    marginBottom: 0,
+  },
+  listTextTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    letterSpacing: 0.5,
   },
   sectionHeaderText: {
     fontSize: 18,
@@ -702,6 +744,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   formInnerContainer: {
+    // INTERIEUR DE LA SECTION CREATION
+    backgroundColor: colors.primary,
     padding: 16,
   },
   input: {
@@ -717,6 +761,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 12,
+    marginBottom: 12,
+    backgroundColor: colors.primary,
   },
   addExerciseButton: {
     flex: 1,
@@ -751,9 +797,10 @@ const styles = StyleSheet.create({
   },
   selectedExercisesContainer: {
     marginVertical: 12,
+    backgroundColor: colors.primary,
   },
   selectedExerciseTag: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.primaryDark,
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -806,6 +853,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
   modalTitle: {
     fontSize: 18,
@@ -823,19 +871,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    
   },
   exercisePickerItemSelected: {
-    backgroundColor: '#f0f0f0',
   },
   exercisePickerName: {
     fontSize: 16,
     fontWeight: '500',
     color: colors.text.dark,
     marginBottom: 4,
+    backgroundColor: colors.white,
   },
   exercisePickerDetails: {
     fontSize: 14,
     color: colors.text.light,
+    backgroundColor: colors.white,
   },
   checkboxContainer: {
     width: 24,
@@ -846,6 +896,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+    backgroundColor: colors.text.dark,
   },
   confirmSelectionButton: {
     backgroundColor: colors.primary,
@@ -937,6 +988,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 6,
     color: colors.text.medium,
+    backgroundColor: colors.primary,
   },
   dateInput: {
     backgroundColor: colors.white,
@@ -950,14 +1002,19 @@ const styles = StyleSheet.create({
     color: colors.text.light,
     fontSize: 14,
     fontStyle: 'italic',
+    backgroundColor: colors.primary,
   },
   dateHelperText: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: colors.primaryDark,
     marginTop: 5
   },
   formGroup: {
-    marginBottom: 15
+    marginBottom: 15,
+    backgroundColor: colors.primary,
+  },
+  formNumberOFExercise: {
+  backgroundColor: colors.primary,
   },
   label: {
     fontSize: 16,
@@ -973,8 +1030,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   datePicker: {
-    marginLeft: 50,
     width: '100%',
     marginTop: 5,
+    backgroundColor: colors.primary,
   },
 });
