@@ -70,27 +70,16 @@ class ApiClient {
                   "currentUser",
                 ]);
 
-                if (
-                  typeof window !== "undefined" &&
-                  window.location.pathname !== "/login"
-                ) {
-                  router.replace("/login");
-                }
-                // Navigate to login page
+                // Always redirect, both web and native
+                router.replace("/login");
 
-                // Reset refreshing state
                 this.isRefreshing = false;
-
-                // Reject the original request
                 return Promise.reject(error);
               } catch (refreshError) {
-                // Reset refreshing state even in case of error
                 this.isRefreshing = false;
                 return Promise.reject(refreshError);
               }
             } else {
-              // For pending requests during token refresh
-              // This is a fallback, but in this case, we'll just reject
               return Promise.reject(error);
             }
           }

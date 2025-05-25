@@ -10,6 +10,7 @@ import { useUserContext } from './contexts/UserContext';
 import TrainingDetails from './TrainingDetails';
 import CustomDatePicker from './CustomDatePicker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 export default function TrainingContent({ path }: { path: string }) {
   const [trainingName, setTrainingName] = useState("");
@@ -258,12 +259,12 @@ export default function TrainingContent({ path }: { path: string }) {
   };
 
   useEffect(() => {
-    if (currentUser && currentUser.id) {
-      fetchTrainings();
-      fetchExercises();
-    } else {
-      console.warn("Utilisateur non connecté ou ID utilisateur manquant.");
+    if (!currentUser || !currentUser.id) {
+      router.replace("/login");
+      return;
     }
+    fetchTrainings();
+    fetchExercises();
   }, [currentUser]);
 
   useEffect(() => {

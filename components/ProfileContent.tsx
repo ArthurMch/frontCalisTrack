@@ -78,9 +78,11 @@ export default function ProfileContent({ path }: { path: string }) {
   };
 
   useEffect(() => {
-    if (currentUser) {
-      fetchUser();
+    if (!currentUser) {
+      router.replace("/login");
+      return;
     }
+    fetchUser();
   }, [currentUser]); // Déclenche fetchUser dès que currentUser est dispo
 
   // Fonction pour afficher un message d'erreur
