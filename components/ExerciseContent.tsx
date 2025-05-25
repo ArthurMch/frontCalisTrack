@@ -16,6 +16,7 @@ import { Exercise } from "@/models/exercise.model";
 import AppModal from "@/components/AppModal"; 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserContext } from "./contexts/UserContext";
+import { router } from "expo-router";
 
 
 export default function ExerciseContent({ path }: { path: string }) {
@@ -52,7 +53,7 @@ export default function ExerciseContent({ path }: { path: string }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await exerciseService.findAllById(currentUser!.id);
+      const data = await exerciseService.findAllByUserId(currentUser!.id);
       if (!data || data.length === 0) {
         setExercises([]);
         setError("Aucun exercice disponible.");
@@ -173,8 +174,12 @@ export default function ExerciseContent({ path }: { path: string }) {
   };
 
   useEffect(() => {
+    if (!currentUser) {
+      router.replace("/login");
+      return;
+    }
     fetchExercises();
-  }, []);
+  }, [currentUser]);
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
