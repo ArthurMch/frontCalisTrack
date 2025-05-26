@@ -117,9 +117,20 @@ export default function ExerciseContent({ path }: { path: string }) {
       await exerciseService.delete(id);
       showModal('success', 'Succès', 'Exercice supprimé avec succès!');
       fetchExercises();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de la suppression de l'exercice :", error);
-      showModal('error', 'Erreur', 'Une erreur est survenue lors de la suppression de l\'exercice.');
+      
+      // Gestion des différents codes de statut
+      if (error.response?.status === 409) { // CONFLICT
+        showModal('error', 'Suppression impossible', 
+          'Cet exercice ne peut pas être supprimé car il est utilisé dans des entraînements. Veuillez d\'abord le retirer de vos entraînements.');
+      } else if (error.response?.status === 404) { // NOT_FOUND
+        showModal('error', 'Exercice introuvable', 
+          'L\'exercice que vous tentez de supprimer n\'existe pas.');
+      } else {
+        showModal('error', 'Erreur', 
+          'Une erreur est survenue lors de la suppression de l\'exercice.');
+      }
     }
   };
 
