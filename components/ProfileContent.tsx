@@ -61,7 +61,6 @@ export default function ProfileContent({ path }: { path: string }) {
         setError("Aucun utilisateur trouvé.");
         showErrorMessage("Erreur", "Aucun utilisateur trouvé.");
       } else {
-        console.log("Utilisateur récupéré :", data);
         setUser(data);
         setFirstname(data.firstname);
         setLastname(data.lastname);

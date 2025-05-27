@@ -51,7 +51,6 @@ export default function TrainingContent({ path }: { path: string }) {
     setError(null);
     try {
       const data = await trainingService.findAllByUser(currentUser!.id);
-       console.log("Données récupérées depuis l'API :", data);
       if (!data || data.length === 0) {
         setTrainings([]);
         setError("Aucun entraînement disponible.");
@@ -150,8 +149,6 @@ export default function TrainingContent({ path }: { path: string }) {
         trainingUser: currentUser!.id,
         exercises: selectedExercises,
       };
-
-      console.log("Création de l'entraînement :", newTraining);
       
       await trainingService.create(newTraining);
       showModal('success', 'Succès', 'Entraînement créé avec succès !');
