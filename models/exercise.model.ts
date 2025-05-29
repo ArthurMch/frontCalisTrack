@@ -6,4 +6,5 @@ export interface Exercise {
   set: number | null;
   rep: number | null;
   restTimeInMinutes: number | null;
+  userId: number | null;
 }

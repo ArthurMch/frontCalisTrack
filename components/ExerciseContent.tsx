@@ -91,6 +91,10 @@ export default function ExerciseContent({ path }: { path: string }) {
       showModal('error', 'Erreur', 'Tous les champs doivent être remplis !');
       return;
     }
+    if (!currentUser || !currentUser.id) {
+      showModal('error', 'Erreur', 'Utilisateur non identifié.');
+      return;
+    }
 
     try {
       const newExercise: Exercise = {
@@ -99,6 +103,7 @@ export default function ExerciseContent({ path }: { path: string }) {
         set: parseInt(setCount),
         rep: parseInt(repCount),
         restTimeInMinutes: parseInt(restTime),
+        userId: currentUser.id
       };
       
       await exerciseService.create(newExercise);
