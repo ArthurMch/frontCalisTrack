@@ -9,7 +9,9 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
-  Modal
+  Modal,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { exerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
@@ -17,7 +19,6 @@ import AppModal from "@/components/AppModal";
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserContext } from "./contexts/UserContext";
 import { router } from "expo-router";
-
 
 export default function ExerciseContent({ path }: { path: string }) {
   const [name, setName] = useState("");
@@ -27,7 +28,7 @@ export default function ExerciseContent({ path }: { path: string }) {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isCreateSectionVisible, setIsCreateSectionVisible] = useState(true);
+  const [isCreateSectionVisible, setIsCreateSectionVisible] = useState(false); // Fermé par défaut
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const insets = useSafeAreaInsets();
@@ -46,8 +47,8 @@ export default function ExerciseContent({ path }: { path: string }) {
     exerciseId: null as number | null
   });
   
-  const animatedHeight = useRef(new Animated.Value(1)).current;
-  const arrowRotation = useRef(new Animated.Value(1)).current;
+  const animatedHeight = useRef(new Animated.Value(0)).current; // Commencer fermé
+  const arrowRotation = useRef(new Animated.Value(0)).current; // Commencer fermé
 
   const fetchExercises = async () => {
     setLoading(true);
@@ -105,6 +106,20 @@ export default function ExerciseContent({ path }: { path: string }) {
       setSetCount("");
       setRepCount("");
       setRestTime("");
+      // Fermer le formulaire après création
+      setIsCreateSectionVisible(false);
+      Animated.timing(animatedHeight, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: false,
+      }).start();
+      Animated.timing(arrowRotation, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: false,
+      }).start();
       fetchExercises();
     } catch (error) {
       console.error("Erreur lors de la création de l'exercice :", error);
@@ -120,11 +135,10 @@ export default function ExerciseContent({ path }: { path: string }) {
     } catch (error: any) {
       console.error("Erreur lors de la suppression de l'exercice :", error);
       
-      // Gestion des différents codes de statut
-      if (error.response?.status === 409) { // CONFLICT
+      if (error.response?.status === 409) {
         showModal('error', 'Suppression impossible', 
           'Cet exercice ne peut pas être supprimé car il est utilisé dans des entraînements. Veuillez d\'abord le retirer de vos entraînements.');
-      } else if (error.response?.status === 404) { // NOT_FOUND
+      } else if (error.response?.status === 404) {
         showModal('error', 'Exercice introuvable', 
           'L\'exercice que vous tentez de supprimer n\'existe pas.');
       } else {
@@ -135,17 +149,14 @@ export default function ExerciseContent({ path }: { path: string }) {
   };
 
   const editExercise = (exerciseId: number) => {
-    // Implémentation future de la modification
     showModal('info', 'Information', 'Fonctionnalité de modification à venir.');
     closeMenu();
   };
 
-  // Toggle animation for the create section
   const toggleCreateSection = () => {
     const newVisibility = !isCreateSectionVisible;
     setIsCreateSectionVisible(newVisibility);
     
-    // Animate the height
     Animated.timing(animatedHeight, {
       toValue: newVisibility ? 1 : 0,
       duration: 300,
@@ -153,7 +164,6 @@ export default function ExerciseContent({ path }: { path: string }) {
       useNativeDriver: false,
     }).start();
     
-    // Animate the arrow rotation
     Animated.timing(arrowRotation, {
       toValue: newVisibility ? 1 : 0,
       duration: 300,
@@ -162,16 +172,14 @@ export default function ExerciseContent({ path }: { path: string }) {
     }).start();
   };
 
-  // Calculate rotation value for the arrow
   const rotateArrow = arrowRotation.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
   });
 
-  // Calculate the height of the animated container
   const maxHeight = animatedHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 370], // Ajusté pour inclure le bouton
+    outputRange: [0, 370],
   });
 
   const openMenu = (exerciseId: number) => {
@@ -194,183 +202,186 @@ export default function ExerciseContent({ path }: { path: string }) {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-    <View style={styles.container}>
-      {/* Liste des exercices */}
-  <View style={styles.titleContainer}>
-  <Text style={styles.sectionTitle}>Liste des exercices</Text>
-  <View style={styles.titleUnderline} />
-  </View>
-      {loading && <Text style={styles.statusText}>Chargement des exercices...</Text>}
-      {error && <Text style={styles.error}>{error}</Text>}
-      {!loading && !error && exercises.length === 0 && (
-        <Text style={styles.statusText}>Aucun exercice disponible.</Text>
-      )}
-
-      <FlatList
-        data={exercises}
-        keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
-        renderItem={({ item }) => (
-          <View style={styles.exerciseItem}>
-            {/* Image placeholder */}
-            <View style={styles.exerciseContent}>
-              <View style={styles.imageContainer}>
-                <Text style={styles.imagePlaceholder}>IMG</Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.container}>
+          {/* Titre de la liste avec bouton déroulant intégré */}
+          <View style={styles.titleContainer}>
+            <View style={styles.titleWithButton}>
+              <View style={styles.titleSection}>
+                <Text style={styles.sectionTitle}>Exercices</Text>
+                <View style={styles.titleUnderline} />
               </View>
               
-              <View style={styles.exerciseInfo}>
-                <Text style={styles.exerciseName}>{item.name}</Text>
-                <View style={styles.exerciseDetails}>
-                  <Text style={styles.exerciseText}>{item.set} séries</Text>
-                  <Text style={styles.exerciseText}>{item.rep} répétitions</Text>
-                  <Text style={styles.exerciseText}>{item.restTimeInMinutes} min de repos</Text>
-                </View>
-              </View>
-              
-              {/* Options menu button */}
-              <TouchableOpacity 
-                style={styles.menuButton}
-                onPress={() => openMenu(item.id!)}
+              {/* Bouton déroulant pour créer un exercice */}
+              <TouchableOpacity
+                style={styles.createToggleButton}
+                onPress={toggleCreateSection}
+                activeOpacity={0.7}
               >
-                <Text style={styles.menuDots}>⋮</Text>
+                <Text style={styles.createToggleText}>+ Créer</Text>
+                <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
+                  <Text style={styles.toggleIcon}>▼</Text>
+                </Animated.View>
               </TouchableOpacity>
             </View>
+
+            {/* Formulaire animé dans le container titre */}
+            <Animated.View 
+              style={[
+                styles.createSectionContainer,
+                { height: maxHeight, overflow: 'hidden', opacity: animatedHeight }
+              ]}
+            >
+              <View style={styles.formInnerContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nom de l'exercice"
+                  value={name}
+                  onChangeText={setName}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nombre de séries"
+                  value={setCount}
+                  keyboardType="numeric"
+                  onChangeText={setSetCount}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nombre de répétitions"
+                  value={repCount}
+                  keyboardType="numeric"
+                  onChangeText={setRepCount}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Temps de repos (en minutes)"
+                  value={restTime}
+                  keyboardType="numeric"
+                  onChangeText={setRestTime}
+                />
+                <TouchableOpacity style={styles.createButton} onPress={createExercise}>
+                  <Text style={styles.createButtonText}>Créer l'exercice</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
           </View>
-        )}
-        contentContainerStyle={styles.listContainer}
-        keyboardShouldPersistTaps="handled"
-      />
 
-      {/* Section header with toggle button */}
-      <TouchableOpacity
-        style={[
-          styles.sectionHeader,
-          {
-            borderBottomLeftRadius: isCreateSectionVisible ? 0 : 10,
-            borderBottomRightRadius: isCreateSectionVisible ? 0 : 10,
-          }
-        ]}
-        onPress={toggleCreateSection}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.sectionHeaderText}>Créer un exercice</Text>
-        <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
-          <Text style={styles.toggleIcon}>▲</Text>
-        </Animated.View>
-      </TouchableOpacity>
+          {/* Messages de statut */}
+          {loading && <Text style={styles.statusText}>Chargement des exercices...</Text>}
+          {error && <Text style={styles.error}>{error}</Text>}
+          {!loading && !error && exercises.length === 0 && (
+            <Text style={styles.statusText}>Aucun exercice disponible.</Text>
+          )}
 
-      {/* Animated container for the create section */}
-      <Animated.View 
-        style={[
-          styles.createSectionContainer,
-          { height: maxHeight, overflow: 'hidden', opacity: animatedHeight }
-        ]}
-      >
-        {/* Contenu du formulaire dans une View imbriquée pour garantir l'affichage même à height 0 */}
-        <View style={styles.formInnerContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nom de l'exercice"
-            value={name}
-            onChangeText={setName}
+          {/* Liste des exercices */}
+          <FlatList
+            data={exercises}
+            keyExtractor={(item, index) => (item.id ? item.id.toString() : `fallback-${index}`)}
+            renderItem={({ item }) => (
+              <View style={styles.exerciseItem}>
+                <View style={styles.exerciseContent}>
+                  <View style={styles.imageContainer}>
+                    <Text style={styles.imagePlaceholder}>IMG</Text>
+                  </View>
+                  
+                  <View style={styles.exerciseInfo}>
+                    <Text style={styles.exerciseName}>{item.name}</Text>
+                    <View style={styles.exerciseDetails}>
+                      <Text style={styles.exerciseText}>{item.set} séries</Text>
+                      <Text style={styles.exerciseText}>{item.rep} répétitions</Text>
+                      <Text style={styles.exerciseText}>{item.restTimeInMinutes} min de repos</Text>
+                    </View>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.menuButton}
+                    onPress={() => openMenu(item.id!)}
+                  >
+                    <Text style={styles.menuDots}>⋮</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+            contentContainerStyle={styles.listContainer}
+            keyboardShouldPersistTaps="handled"
+            style={{ flex: 1 }}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre de séries"
-            value={setCount}
-            keyboardType="numeric"
-            onChangeText={setSetCount}
+
+          {/* Menu contextuel */}
+          <Modal
+            visible={isMenuVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={closeMenu}
+          >
+            <TouchableOpacity 
+              style={styles.modalOverlay} 
+              activeOpacity={1} 
+              onPress={closeMenu}
+            >
+              <View style={styles.contextMenu}>
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => {
+                    if (selectedExerciseId) editExercise(selectedExerciseId);
+                  }}
+                >
+                  <Text style={styles.menuItemIcon}>✏️</Text>
+                  <Text style={styles.menuItemText}>Modifier</Text>
+                </TouchableOpacity>
+                
+                <View style={styles.menuDivider} />
+                
+                <TouchableOpacity 
+                  style={[styles.menuItem, styles.deleteMenuItem]}
+                  onPress={() => {
+                    if (selectedExerciseId) {
+                      showConfirmModal(selectedExerciseId);
+                    } 
+                  }}
+                >
+                  <Text style={styles.menuItemIcon}>🗑️</Text>
+                  <Text style={styles.menuItemText}>Supprimer</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+
+          {/* Modals */}
+          <AppModal
+            visible={modal.visible}
+            title={modal.title}
+            message={modal.message}
+            type={modal.type}
+            onClose={() => setModal(prev => ({ ...prev, visible: false }))}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre de répétitions"
-            value={repCount}
-            keyboardType="numeric"
-            onChangeText={setRepCount}
+
+          <AppModal
+            visible={confirmModal.visible}
+            title="Confirmation"
+            message="Êtes-vous sûr de vouloir supprimer cet exercice ?"
+            type="error"
+            onClose={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+            confirmButton={{
+              text: "Supprimer",
+              onPress: () => {
+                if (confirmModal.exerciseId !== null) {
+                  deleteExercise(confirmModal.exerciseId);
+                  setConfirmModal({ visible: false, exerciseId: null });
+                }
+              }
+            }}
+            cancelButton={{
+              text: "Annuler",
+              onPress: () => setConfirmModal({ visible: false, exerciseId: null })
+            }}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Temps de repos (en minutes)"
-            value={restTime}
-            keyboardType="numeric"
-            onChangeText={setRestTime}
-          />
-          <TouchableOpacity style={styles.createButton} onPress={createExercise}>
-            <Text style={styles.createButtonText}>Créer l'exercice</Text>
-          </TouchableOpacity>
         </View>
-      </Animated.View>
-
-      {/* Menu contextuel */}
-      <Modal
-        visible={isMenuVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={closeMenu}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={closeMenu}
-        >
-          <View style={styles.contextMenu}>
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => {
-                if (selectedExerciseId) editExercise(selectedExerciseId);
-              }}
-            >
-              <Text style={styles.menuItemIcon}>✏️</Text>
-              <Text style={styles.menuItemText}>Modifier</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, styles.deleteMenuItem]}
-              onPress={() => {
-                if (selectedExerciseId) {
-                  showConfirmModal(selectedExerciseId);
-                } 
-              }}
-            >
-              <Text style={styles.menuItemIcon}>🗑️</Text>
-              <Text style={styles.menuItemText}>Supprimer</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Modals utilisant le composant AppModal */}
-      <AppModal
-        visible={modal.visible}
-        title={modal.title}
-        message={modal.message}
-        type={modal.type}
-        onClose={() => setModal(prev => ({ ...prev, visible: false }))}
-      />
-
-      {/* Modal de confirmation de suppression */}
-      <AppModal
-        visible={confirmModal.visible}
-        title="Confirmation"
-        message="Êtes-vous sûr de vouloir supprimer cet exercice ?"
-        type="error"
-        onClose={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
-        confirmButton={{
-          text: "Supprimer",
-          onPress: () => {
-            if (confirmModal.exerciseId !== null) {
-              deleteExercise(confirmModal.exerciseId);
-              setConfirmModal({ visible: false, exerciseId: null });
-            }
-          }
-        }}
-        cancelButton={{
-          text: "Annuler",
-          onPress: () => setConfirmModal({ visible: false, exerciseId: null })
-        }}
-      />
-    </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -379,7 +390,7 @@ const screenWidth = Dimensions.get("window").width;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: screenWidth ,
+    width: screenWidth,
     alignSelf: "center",
     backgroundColor: "#f5f5f5",
     elevation: 4,
@@ -392,7 +403,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#4a90e2",
     padding: 16,
     borderRadius: 10,
-    marginTop: 10, // Supprimé l'espace entre le header et le contenu
+    marginTop: 10,
+    marginHorizontal: 16, // Ajout de marges horizontales
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -410,10 +422,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   createSectionContainer: {
-    backgroundColor: "#4a90e2",
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    marginBottom: 0, // Marge appliquée au conteneur extérieur plutôt qu'au header
+    backgroundColor: "#2971cc",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -423,17 +432,42 @@ const styles = StyleSheet.create({
   formInnerContainer: {
     padding: 16,
   },
-   titleContainer: {
+  titleContainer: {
     width: "100%",
-    paddingVertical: 15,
-    paddingHorizontal: 16,
-    backgroundColor: "#2971cc",
+    backgroundColor: "black",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
     marginBottom: 0,
+  },
+  titleWithButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+  },
+  titleSection: {
+    flex: 1,
+    alignItems: "center",
+  },
+  createToggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  createToggleText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginRight: 6,
   },
   sectionTitle: {
     fontSize: 24,
@@ -452,15 +486,16 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "rgba(255, 255, 255, 0.3)",
     padding: 14,
     marginBottom: 15,
     borderRadius: 8,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     fontSize: 16,
+    color: "#333",
   },
   createButton: {
-    backgroundColor: "#2971cc", // Légèrement plus foncé que le fond pour se distinguer
+    backgroundColor: "#fff",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
@@ -472,12 +507,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   createButtonText: {
-    color: "#fff",
+    color: "#2971cc",
     fontSize: 16,
     fontWeight: "bold",
   },
   listContainer: {
     paddingBottom: 4,
+    flexGrow: 1, // Permet à la liste de s'étendre
   },
   exerciseItem: {
     marginTop: 10,

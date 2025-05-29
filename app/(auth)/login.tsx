@@ -48,9 +48,9 @@ export default function LoginPage() {
   };
   
   const handleLogin = async () => {
-    
     setErrorMessage("");
     setSuccessMessage("");
+    
     if (!email.trim()) {
       setErrorMessage("Veuillez saisir votre email");
       return;
@@ -59,16 +59,24 @@ export default function LoginPage() {
       setErrorMessage("Veuillez saisir votre mot de passe");
       return;
     }
+    
     try {
       const loginRequest = { email, password };
       const response = await authService.login(loginRequest);
-
-      setCurrentUser({
+  
+      // Sauvegarder le token (important !)
+      if (response.accessToken) {
+        await AsyncStorage.setItem('token', response.accessToken);
+      }
+  
+      // Mettre à jour l'utilisateur via le contexte
+      await setCurrentUser({
         id: response.id,
         email: response.email,
       });
-       router.push("/(app)/exercise");
-    } catch (err : any) {
+      
+      router.push("/(app)/exercise");
+    } catch (err: any) {
       console.error("Erreur de connexion:", err);
       if (err && err.response && err.response.status === 403) {
         setErrorMessage("Email ou mot de passe incorrect.");
