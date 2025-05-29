@@ -52,7 +52,10 @@ class ApiClient {
         };
 
         // Gestion des erreurs 401 (token expiré) uniquement
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (
+          (error.response?.status === 401 || error.response?.status === 403) &&
+          !originalRequest._retry
+        ) {
           originalRequest._retry = true;
 
           // Déclencher le logout via le contexte
