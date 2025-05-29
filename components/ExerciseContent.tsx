@@ -32,7 +32,7 @@ export default function ExerciseContent({ path }: { path: string }) {
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const insets = useSafeAreaInsets();
-  const { currentUser } = useUserContext();
+  const { currentUser, isLoading: userLoading } = useUserContext();
   
   // État pour les modals
   const [modal, setModal] = useState({
@@ -91,6 +91,10 @@ export default function ExerciseContent({ path }: { path: string }) {
       showModal('error', 'Erreur', 'Tous les champs doivent être remplis !');
       return;
     }
+    if (!currentUser || !currentUser.id) {
+      showModal('error', 'Erreur', 'Utilisateur non identifié.');
+      return;
+    }
 
     try {
       const newExercise: Exercise = {
@@ -99,14 +103,19 @@ export default function ExerciseContent({ path }: { path: string }) {
         set: parseInt(setCount),
         rep: parseInt(repCount),
         restTimeInMinutes: parseInt(restTime),
+        userId: currentUser.id
       };
+      
       await exerciseService.create(newExercise);
-      showModal('success', 'Succès', 'Exercice créé avec succès !');
+      
+      // Réinitialiser les champs
       setName("");
       setSetCount("");
       setRepCount("");
       setRestTime("");
-      // Fermer le formulaire après création
+      
+      await fetchExercises();
+      
       setIsCreateSectionVisible(false);
       Animated.timing(animatedHeight, {
         toValue: 0,
@@ -120,7 +129,10 @@ export default function ExerciseContent({ path }: { path: string }) {
         easing: Easing.bezier(0.4, 0, 0.2, 1),
         useNativeDriver: false,
       }).start();
-      fetchExercises();
+      
+      // Afficher le message de succès à la fin
+      showModal('success', 'Succès', 'Exercice créé avec succès !');
+      
     } catch (error) {
       console.error("Erreur lors de la création de l'exercice :", error);
       showModal('error', 'Erreur', 'Une erreur est survenue lors de la création de l\'exercice.');
@@ -211,7 +223,7 @@ export default function ExerciseContent({ path }: { path: string }) {
           <View style={styles.titleContainer}>
             <View style={styles.titleWithButton}>
               <View style={styles.titleSection}>
-                <Text style={styles.sectionTitle}>Exercices</Text>
+                <Text style={styles.sectionTitle}>Liste des exercices</Text>
                 <View style={styles.titleUnderline} />
               </View>
               

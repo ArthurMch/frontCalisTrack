@@ -79,7 +79,7 @@ export default function TrainingContent({ path }: { path: string }) {
 
   const fetchExercises = async () => {
     try {
-      const data = await exerciseService.findAll();
+      const data = await exerciseService.findAllByUserId(currentUser!.id);
       setExercises(data || []);
     } catch (error) {
       console.error("Erreur lors de la récupération des exercices :", error);

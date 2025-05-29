@@ -54,7 +54,6 @@ export class AuthService {
       return response.data.isValid;
     } catch (error) {
       console.error("Token validation failed:", error);
-      router.replace("/login");
       return false;
     }
   }
