@@ -51,40 +51,17 @@ class ApiClient {
           _retry?: boolean;
         };
 
-        // If the error is 403 Unauthorized or 401 (token expired)
-        if (error.response?.status === 403 || error.response?.status === 401) {
-          if (!originalRequest._retry) {
-            if (!this.isRefreshing) {
-              this.isRefreshing = true;
+        // Gestion des erreurs 401 (token expiré) uniquement
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
 
-              try {
-                // Global token expired handler
-                if (AuthEvents.onTokenExpired) {
-                  AuthEvents.onTokenExpired();
-                }
-
-                // Clear stored tokens and user data
-                await AsyncStorage.multiRemove([
-                  "token",
-                  "refreshToken",
-                  "currentUser",
-                ]);
-
-                // Always redirect, both web and native
-                router.replace("/login");
-
-                this.isRefreshing = false;
-                return Promise.reject(error);
-              } catch (refreshError) {
-                this.isRefreshing = false;
-                return Promise.reject(refreshError);
-              }
-            } else {
-              return Promise.reject(error);
-            }
+          // Déclencher le logout via le contexte
+          if (AuthEvents.onTokenExpired) {
+            AuthEvents.onTokenExpired();
           }
-        }
 
+          return Promise.reject(error);
+        }
         return Promise.reject(error);
       }
     );

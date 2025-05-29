@@ -68,15 +68,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("refreshToken");
-      await AsyncStorage.removeItem("currentUser");
-      
+      await AsyncStorage.multiRemove(["token", "refreshToken", "currentUser"]);
       setCurrentUserState(null);
       
-      if (router.canGoBack()) {
-        router.replace("/login");
-      }
+      // Vérifier qu'on n'est pas déjà sur la page de login
+      router.replace("/login");
     } catch (error) {
       console.error("Erreur lors de la déconnexion :", error);
     }
