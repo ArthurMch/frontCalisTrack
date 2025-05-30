@@ -485,7 +485,10 @@ export default function TrainingContent({ path }: { path: string }) {
                           ]}
                           onPress={() => toggleExerciseSelection(item)}
                         >
-                          <View style={styles.exercisePickerItemContent}>
+                          <View style={[
+                            styles.exercisePickerItemContent,
+                            { backgroundColor: isSelected ? "rgba(74, 144, 226, 0.1)" : colors.white }
+                          ]}>
                             <Text style={styles.exercisePickerName}>{item.name}</Text>
                             <Text style={styles.exercisePickerDetails}>
                               {item.set} séries • {item.rep} répétitions • {item.restTimeInMinutes} min repos
@@ -930,22 +933,22 @@ const styles = StyleSheet.create({
   },
   exercisePickerItemSelected: {
     backgroundColor: "rgba(74, 144, 226, 0.1)",
+
   },
   exercisePickerItemContent: {
     flex: 1,
-    backgroundColor: colors.white,
+    padding: 4,
+    borderRadius: 8,
   },
   exercisePickerName: {
     fontSize: 16,
     fontWeight: '500',
     color: colors.text.dark,
     marginBottom: 4,
-    backgroundColor: colors.white,
   },
   exercisePickerDetails: {
     fontSize: 14,
     color: colors.text.light,
-    backgroundColor: colors.white,
   },
   checkboxContainer: {
     width: 24,
