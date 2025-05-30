@@ -61,7 +61,7 @@ export class AuthService {
   async getUserInfo(): Promise<User> {
     try {
       const response = await api.get<User>(`${AUTH_ENDPOINT}/user`);
-      
+      console.log("was called");
       // Optionnel : stocker les informations utilisateur
       await AsyncStorage.setItem("currentUser", JSON.stringify(response.data));
       

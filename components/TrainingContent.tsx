@@ -62,7 +62,7 @@ export default function TrainingContent({ path }: { path: string }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await trainingService.findAllByUser(currentUser!.id);
+      const data = await trainingService.findAllByUser(currentUser!.id!);
       if (!data || data.length === 0) {
         setTrainings([]);
         setError("Aucun entraînement disponible.");
@@ -79,7 +79,7 @@ export default function TrainingContent({ path }: { path: string }) {
 
   const fetchExercises = async () => {
     try {
-      const data = await exerciseService.findAllByUserId(currentUser!.id);
+      const data = await exerciseService.findAllByUserId(currentUser!.id!);
       setExercises(data || []);
     } catch (error) {
       console.error("Erreur lors de la récupération des exercices :", error);
@@ -645,10 +645,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 16,
+    backgroundColor: "black",
   },
   titleSection: {
     flex: 1,
     alignItems: "center",
+    backgroundColor: "black",
   },
   sectionTitle: {
     fontSize: 24,
@@ -656,6 +658,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     textAlign: "center",
     letterSpacing: 0.5,
+    backgroundColor: "black",
   },
   titleUnderline: {
     width: 60,

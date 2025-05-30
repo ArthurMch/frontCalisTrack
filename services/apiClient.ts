@@ -6,7 +6,6 @@ import axios, {
 } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-import { router } from "expo-router";
 
 // Global event handler for token expiration
 export const AuthEvents = {

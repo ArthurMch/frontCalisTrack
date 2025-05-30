@@ -11,7 +11,8 @@ import {
   Easing,
   Modal,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  ActivityIndicator
 } from "react-native";
 import { exerciseService } from "@/services/exercise.service";
 import { Exercise } from "@/models/exercise.model";
@@ -54,7 +55,7 @@ export default function ExerciseContent({ path }: { path: string }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await exerciseService.findAllByUserId(currentUser!.id);
+      const data = await exerciseService.findAllByUserId(currentUser!.id!);
       if (!data || data.length === 0) {
         setExercises([]);
         setError("Aucun exercice disponible.");
@@ -205,12 +206,21 @@ export default function ExerciseContent({ path }: { path: string }) {
   };
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!userLoading && currentUser && currentUser.id) {
+      fetchExercises();
+    } else if (!userLoading && !currentUser) {
       router.replace("/login");
-      return;
     }
-    fetchExercises();
-  }, [currentUser]);
+  }, [currentUser, userLoading]);
+
+  if (userLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+        <Text>Chargement...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>

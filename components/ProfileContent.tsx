@@ -9,7 +9,7 @@ import {
   Dimensions, 
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CommunButton from "./CommunButton";
@@ -35,7 +35,6 @@ export default function ProfileContent({ path }: { path: string }) {
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const insets = useSafeAreaInsets();
   
-  // États pour les modals
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -43,9 +42,8 @@ export default function ProfileContent({ path }: { path: string }) {
   const [showPasswordInfoModal, setShowPasswordInfoModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [modalTitle, setModalTitle] = useState("");
-  const { currentUser } = useUserContext();
+  const { currentUser, isLoading: userLoading } = useUserContext();
   
-  // Fonction pour récupérer l'utilisateur
   const fetchUser = async () => {
     if (!currentUser || currentUser == null) {
       console.error("Aucun utilisateur connecté.");
@@ -54,7 +52,7 @@ export default function ProfileContent({ path }: { path: string }) {
     setLoading(true);
     setError(null);
     try {
-      const data: User = await userService.findById(currentUser.id);
+      const data: User = await userService.findById(currentUser.id!);
     
       if (!data) {
         setUser(null);
@@ -75,30 +73,17 @@ export default function ProfileContent({ path }: { path: string }) {
       setLoading(false);
     } 
   };
-
-  useEffect(() => {
-    if (!currentUser) {
-      router.replace("/login");
-      return;
-    }
-    fetchUser();
-  }, [currentUser]); // Déclenche fetchUser dès que currentUser est dispo
-
-  // Fonction pour afficher un message d'erreur
   const showErrorMessage = (title: string, message: string) => {
     setModalTitle(title);
     setModalMessage(message);
     setShowErrorModal(true);
   };
-
-  // Fonction pour afficher un message de succès
   const showSuccessMessage = (title: string, message: string) => {
     setModalTitle(title);
     setModalMessage(message);
     setShowSuccessModal(true);
   };
 
-  // Fonction pour montrer les informations sur le mot de passe
   const showPasswordRequirements = () => {
     setModalTitle("Exigences du mot de passe");
     setModalMessage(
@@ -111,26 +96,20 @@ export default function ProfileContent({ path }: { path: string }) {
     setShowPasswordInfoModal(true);
   };
 
-  // Fonction pour valider le formulaire de profil
   const validateProfileForm = () => {
     if (!firstname || !lastname || !email || !phone) {
       showErrorMessage("Champs obligatoires", "Veuillez remplir tous les champs obligatoires.");
       return false;
     }
-
-    // Validation de l'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       showErrorMessage("Format invalide", "Veuillez entrer une adresse email valide.");
       return false;
     }
-
     return true;
   };
 
-  // Fonction pour valider le formulaire de mot de passe
   const validatePasswordForm = () => {
-    // Vérification si les mots de passe correspondent
     if (!password || !confirmPassword) {
       showErrorMessage("Champs obligatoires", "Veuillez remplir les deux champs de mot de passe.");
       return false;
@@ -146,8 +125,6 @@ export default function ProfileContent({ path }: { path: string }) {
     const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!.,;+:§£¤%*=|`\\#?&(){}\[\]~\/^_-]).{10,}$/;
     
     if (!passwordPattern.test(password)) {
-      // Au lieu d'afficher deux modales, on affiche directement la modale d'information
-      // qui est plus complète et éducative pour l'utilisateur
       setModalTitle("Format incorrect");
       setModalMessage(
         "Le mot de passe doit contenir au moins 10 caractères, incluant au moins:\n" +
@@ -163,7 +140,6 @@ export default function ProfileContent({ path }: { path: string }) {
     return true;
   };
 
-  // Fonction pour mettre à jour les informations du profil
   const updateProfile = async () => {
     if (!validateProfileForm()) {
       return;
@@ -171,15 +147,12 @@ export default function ProfileContent({ path }: { path: string }) {
 
     setIsSavingProfile(true);
     try {
-      // Préparer les données pour la requête
       const profileUpdatePayload = {
         firstname,
         lastname,
         phone,
         email
       };
-
-      // Appeler l'API pour mettre à jour le profil
       const response = await userService.updateProfile(profileUpdatePayload);
 
       if (response.success) {
@@ -187,13 +160,9 @@ export default function ProfileContent({ path }: { path: string }) {
           "Profil mis à jour",
           "Vos informations personnelles ont été mises à jour avec succès !"
         );
-
-        // Si un nouveau token est retourné, mettez-le à jour dans AsyncStorage
         if (response.accessToken) {
           await AsyncStorage.setItem("token", response.accessToken);
         }
-
-        // Recharger les informations utilisateur
         fetchUser();
       } else {
         showErrorMessage(
@@ -211,8 +180,6 @@ export default function ProfileContent({ path }: { path: string }) {
       setIsSavingProfile(false);
     }
   };
-
-  // Fonction pour mettre à jour le mot de passe
   const updatePassword = async () => {
     if (!validatePasswordForm()) {
       return;
@@ -220,31 +187,21 @@ export default function ProfileContent({ path }: { path: string }) {
 
     setIsSavingPassword(true);
     try {
-      // Préparer les données pour la requête
       const passwordUpdatePayload = {
         password
       };
-
-      // Appeler l'API pour mettre à jour le mot de passe
       const response = await userService.updatePassword(passwordUpdatePayload);
-
-      // Gestion des différents statuts de réponse
       if (response.status === 'DONE') {
         showSuccessMessage(
           "Mot de passe mis à jour",
           "Votre mot de passe a été mis à jour avec succès !"
         );
-
-        // Si un nouveau token est retourné, mettez-le à jour dans AsyncStorage
         if (response.accessToken) {
           await AsyncStorage.setItem("token", response.accessToken);
         }
-
-        // Réinitialiser les champs de mot de passe
         setPassword("");
         setConfirmPassword("");
       } else if (response.status === 'INCORRECT') {
-        // Afficher directement la modale d'information sur les exigences du mot de passe
         setModalTitle("Format incorrect");
         setModalMessage(
           "Le mot de passe doit contenir au moins 10 caractères, incluant au moins:\n" +
@@ -276,12 +233,10 @@ export default function ProfileContent({ path }: { path: string }) {
     }
   };
 
-  // Fonction pour ouvrir la confirmation de suppression de compte
   const confirmDeleteUser = () => {
     setShowDeleteConfirmModal(true);
   };
 
-  // Fonction pour supprimer l'utilisateur
   const deleteUser = async () => {
     if (!user) {
       return;
@@ -292,27 +247,18 @@ export default function ProfileContent({ path }: { path: string }) {
     
     try {
       await userService.delete(user.id!);
-      
-      // Afficher le message de succès
       showSuccessMessage(
         "Compte supprimé", 
         "Votre compte a été supprimé avec succès."
       );
-      
-      // Réinitialiser l'utilisateur dans le composant
       setUser(null);
       
-      // Nettoyer les informations d'authentification
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("currentUser");
       
-      // Attendre un court instant pour que l'utilisateur puisse voir le message
       setTimeout(() => {
-        // Fermer la modale de succès si elle est ouverte
         setShowSuccessModal(false);
-        
-        // Rediriger vers la page de login
         router.replace("/login");
       }, 1500); // 1.5 secondes de délai
       
@@ -327,6 +273,15 @@ export default function ProfileContent({ path }: { path: string }) {
     }
   };
 
+  useEffect(() => {
+    if (!currentUser && !userLoading) {
+      router.replace("/login");
+      return;
+    }
+    fetchUser();
+  }, [currentUser]);
+
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -335,6 +290,14 @@ export default function ProfileContent({ path }: { path: string }) {
         <Text style={styles.loadingText}>Chargement de votre profil...</Text>
       </View>
       </SafeAreaView>
+    );
+  }
+  if (userLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+        <Text>Chargement...</Text>
+      </View>
     );
   }
 
@@ -557,7 +520,8 @@ export default function ProfileContent({ path }: { path: string }) {
           text: "Annuler",
           onPress: () => setShowDeleteConfirmModal(false)
         }}
-      /></SafeAreaView>
+      />
+      </SafeAreaView>
     </ScrollView>
     
   );
@@ -567,6 +531,7 @@ const screenWidth = Dimensions.get("window").width;
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
+    minHeight: Dimensions.get('window').height,
   },
   container: {
     width: screenWidth ,
@@ -579,6 +544,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     margin: 0,
     overflow: "hidden",
+    flex: 1,
   },
   header: {
     backgroundColor: "#4a90e2",
