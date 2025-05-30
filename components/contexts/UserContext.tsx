@@ -10,10 +10,8 @@ import { router } from "expo-router";
 import { AuthEvents } from "@/services/apiClient";
 import { authService } from "@/services/auth.service"; // Importez votre authService
 
-interface User {
-  id: number;
-  email: string;
-}
+// Use the User type from your models to ensure compatibility
+import type { User } from "@/models/user.model";
 
 interface UserContextType {
   currentUser: User | null;
@@ -46,16 +44,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const isValid = await authService.validateToken(token);
       
       if (isValid) {
-        console.log("Token valid, loading user from storage...");
-        // Si le token est valide, charger l'utilisateur depuis le storage
         const storedUser = await AsyncStorage.getItem("currentUser");
         if (storedUser) {
           setCurrentUserState(JSON.parse(storedUser));
         } else {
-          // Si pas d'utilisateur en storage mais token valide, 
-          // il faut récupérer l'utilisateur du serveur
-          console.log("No user in storage, need to fetch user data");
-          await logout(); // Force une nouvelle connexion
+          // Récupérer l'utilisateur depuis l'API si non présent dans le storage
+          try {
+            const user = await authService.getUserInfo();
+            await AsyncStorage.setItem("currentUser", JSON.stringify(user));
+            setCurrentUserState(user);
+          } catch (err) {
+            console.log("Failed to fetch user from API, logging out...");
+            await logout();
+          }
         }
       } else {
         console.log("Token invalid, logging out...");
