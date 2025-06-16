@@ -64,7 +64,7 @@ import '@/global.css';
       if (!currentUser) return;
       
       try {
-        const exercises = await exerciseService.findAllByUserId(currentUser.id);
+        const exercises = await exerciseService.findAllByUserId(currentUser!.id!);
         setAvailableExercises(exercises);
       } catch (error) {
         console.error('Error fetching exercises:', error);
@@ -153,7 +153,7 @@ import '@/global.css';
           showModal('error', 'Erreur', 'Utilisateur non connecté.');
           return;
         }
-        await trainingService.update(currentUser.id, updatedTraining);
+        await trainingService.update(currentUser!.id!, updatedTraining);
         setTraining(updatedTraining);
         setIsEditing(false);
         

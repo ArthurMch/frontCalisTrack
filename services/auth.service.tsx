@@ -21,8 +21,6 @@ export class AuthService {
       return response.data;
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
-      
-      // Propagation explicite de l'erreur pour qu'elle soit capturée par le composant
       throw error;
     }
   }
@@ -53,7 +51,6 @@ export class AuthService {
       const response = await api.post(`${AUTH_ENDPOINT}/validate-token`, { token });
       return response.data.isValid;
     } catch (error) {
-      console.error("Token validation failed:", error);
       return false;
     }
   }
@@ -67,7 +64,6 @@ export class AuthService {
       
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch user info:", error);
       throw error;
     }
   }
