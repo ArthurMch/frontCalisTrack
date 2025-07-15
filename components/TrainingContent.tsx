@@ -23,6 +23,7 @@ import TrainingDetails from './TrainingDetails';
 import CustomDatePicker from './CustomDatePicker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function TrainingContent({ path }: { path: string }) {
   const [trainingName, setTrainingName] = useState("");
@@ -82,7 +83,6 @@ export default function TrainingContent({ path }: { path: string }) {
       const data = await exerciseService.findAllByUserId(currentUser!.id!);
       setExercises(data || []);
     } catch (error) {
-      console.error("Erreur lors de la récupération des exercices :", error);
       showModal('error', 'Erreur', 'Impossible de charger les exercices.');
     }
   };
@@ -287,6 +287,15 @@ export default function TrainingContent({ path }: { path: string }) {
       router.replace("/login");
     }
   }, [currentUser, isLoading]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (currentUser && currentUser.id) {
+        fetchExercises();
+        fetchTrainings();
+      }
+    }, [currentUser])
+  );
 
   if (isLoading) {
     return (
