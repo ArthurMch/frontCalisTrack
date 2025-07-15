@@ -9,7 +9,8 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -64,12 +65,10 @@ export default function LoginPage() {
       const loginRequest = { email, password };
       const response = await authService.login(loginRequest);
   
-      // Sauvegarder le token (important !)
       if (response.accessToken) {
         await AsyncStorage.setItem('token', response.accessToken);
       }
   
-      // Mettre à jour l'utilisateur via le contexte
       await setCurrentUser({
         id: response.id,
         email: response.email,
@@ -97,9 +96,13 @@ export default function LoginPage() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.logoContainer}>
-          <Text style={styles.titleGlobal}>CALISTRACK</Text>
-          <Text style={styles.subtitle}>Suivez vos performances</Text>
-        </View>
+        <Image 
+          source={require('@/assets/images/logoCalistrackAndText.png')} // ← Chemin vers votre logo
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.subtitle}>Suivez vos performances</Text>
+      </View>
         
         <View style={styles.formContainer}>
           <View style={styles.titleContainer}>
@@ -181,7 +184,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  
+  logo: {
+    width: 200,        // ← Ajustez la taille selon votre logo
+    height: 150,       // ← Ajustez la hauteur
+    marginBottom: 10,  // ← Espacement avec le sous-titre
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
