@@ -61,7 +61,7 @@ import '@/global.css';
     }, [trainingId, visible, isEditing]);
 
     const fetchAvailableExercises = async () => {
-      if (!currentUser) return;
+      if (!currentUser || currentUser.id === null) return;
       
       try {
         const exercises = await exerciseService.findAllByUserId(currentUser.id);
@@ -149,7 +149,7 @@ import '@/global.css';
           totalMinutesOfRest: editedExercises.reduce((total, ex) => total + (ex.restTimeInMinutes || 0), 0)
         };
         
-        if (!currentUser) {
+        if (!currentUser || currentUser.id === null) {
           showModal('error', 'Erreur', 'Utilisateur non connecté.');
           return;
         }
