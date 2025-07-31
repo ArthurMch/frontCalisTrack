@@ -69,11 +69,9 @@ export default function LoginPage() {
         await AsyncStorage.setItem('token', response.accessToken);
       }
   
-      // Mettre à jour l'utilisateur via le contexte
-      await setCurrentUser({
-        id: response.id,
-        email: response.email,
-      });
+      // Récupérer les informations complètes de l'utilisateur puis mettre à jour le contexte
+      const userInfo = await authService.getUserInfo();
+      await setCurrentUser(userInfo);
       
       router.push("/(app)/exercise");
     } catch (err: any) {
