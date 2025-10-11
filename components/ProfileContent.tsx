@@ -60,9 +60,9 @@ export default function ProfileContent({ path }: { path: string }) {
         showErrorMessage("Erreur", "Aucun utilisateur trouvé.");
       } else {
         setUser(data);
-        setFirstname(data.firstname);
-        setLastname(data.lastname);
-        setPhone(data.phone);
+        setFirstname(data.firstname ?? "");
+        setLastname(data.lastname ?? "");
+        setPhone(data.phone ?? "");
         setEmail(data.email);
       }
     } catch (error) {

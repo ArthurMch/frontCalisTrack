@@ -30,7 +30,6 @@ class ApiClient {
   }
 
   private setupInterceptors(): void {
-    // Request interceptor to add token
     this.instance.interceptors.request.use(
       async (config) => {
         const token = await AsyncStorage.getItem("token");
@@ -42,22 +41,17 @@ class ApiClient {
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor to handle authentication errors
     this.instance.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as AxiosRequestConfig & {
           _retry?: boolean;
         };
-
-        // Gestion des erreurs 401 (token expiré) uniquement
         if (
           (error.response?.status === 401 || error.response?.status === 403) &&
           !originalRequest._retry
         ) {
           originalRequest._retry = true;
-
-          // Déclencher le logout via le contexte
           if (AuthEvents.onTokenExpired) {
             AuthEvents.onTokenExpired();
           }
@@ -108,7 +102,5 @@ class ApiClient {
     return this.instance.patch<T>(url, data, config);
   }
 }
-
-// Create and export an instance with your base URL
 const API_BASE_URL = Constants.expoConfig?.extra?.LOCALHOST_URL;
 export const api = new ApiClient(API_BASE_URL);

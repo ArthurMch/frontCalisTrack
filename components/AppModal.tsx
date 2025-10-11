@@ -34,7 +34,6 @@ const AppModal: React.FC<ModalProps> = ({
   confirmButton,
   cancelButton
 }) => {
-  // Définir les couleurs en fonction du type
   const getTitleColor = () => {
     switch (type) {
       case 'success': return '#2ecc71';
@@ -53,7 +52,6 @@ const AppModal: React.FC<ModalProps> = ({
     }
   };
 
-  // Si on est en mode confirmation (avec deux boutons)
   const isConfirmation = confirmButton && cancelButton;
 
   return (

@@ -8,9 +8,8 @@ import React, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { AuthEvents } from "@/services/apiClient";
-import { authService } from "@/services/auth.service"; // Importez votre authService
+import { authService } from "@/services/auth.service"; 
 
-// Use the User type from your models to ensure compatibility
 import type { User } from "@/models/user.model";
 
 interface UserContextType {
@@ -26,7 +25,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fonction pour valider le token
   const validateToken = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -40,7 +38,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
       console.log("Validating token...");
       
-      // Utilisation de votre authService existant
       const isValid = await authService.validateToken(token);
       
       if (isValid) {
@@ -48,7 +45,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (storedUser) {
           setCurrentUserState(JSON.parse(storedUser));
         } else {
-          // Récupérer l'utilisateur depuis l'API si non présent dans le storage
           try {
             const user = await authService.getUserInfo();
             await AsyncStorage.setItem("currentUser", JSON.stringify(user));
