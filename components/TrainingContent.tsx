@@ -23,6 +23,7 @@ import TrainingDetails from './TrainingDetails';
 import CustomDatePicker from './CustomDatePicker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function TrainingContent({ path }: { path: string }) {
   const [trainingName, setTrainingName] = useState("");
@@ -55,8 +56,8 @@ export default function TrainingContent({ path }: { path: string }) {
     trainingId: null as number | null
   });
   
-  const animatedHeight = useRef(new Animated.Value(0)).current; // Fermé par défaut
-  const arrowRotation = useRef(new Animated.Value(0)).current; // Fermé par défaut
+  const animatedHeight = useRef(new Animated.Value(0)).current; 
+  const arrowRotation = useRef(new Animated.Value(0)).current;
 
   const fetchTrainings = async () => {
     setLoading(true);
@@ -70,7 +71,6 @@ export default function TrainingContent({ path }: { path: string }) {
         setTrainings(data);
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des entraînements :", error);
       setError("Impossible de récupérer les entraînements. Veuillez réessayer plus tard.");
     } finally {
       setLoading(false);
@@ -82,7 +82,6 @@ export default function TrainingContent({ path }: { path: string }) {
       const data = await exerciseService.findAllByUserId(currentUser!.id!);
       setExercises(data || []);
     } catch (error) {
-      console.error("Erreur lors de la récupération des exercices :", error);
       showModal('error', 'Erreur', 'Impossible de charger les exercices.');
     }
   };
@@ -166,7 +165,6 @@ export default function TrainingContent({ path }: { path: string }) {
       setTrainingDate(new Date());
       setSelectedExercises([]);
       
-      // Fermer le formulaire après création
       setIsCreateSectionVisible(false);
       Animated.timing(animatedHeight, {
         toValue: 0,
@@ -183,7 +181,6 @@ export default function TrainingContent({ path }: { path: string }) {
       
       fetchTrainings();
     } catch (error) {
-      console.error("Erreur lors de la création de l'entraînement :", error);
       showModal('error', 'Erreur', 'Une erreur est survenue lors de la création de l\'entraînement.');
     }
   };
@@ -194,7 +191,6 @@ export default function TrainingContent({ path }: { path: string }) {
       showModal('success', 'Succès', 'Entraînement supprimé avec succès!');
       fetchTrainings();
     } catch (error) {
-      console.error("Erreur lors de la suppression de l'entraînement :", error);
       showModal('error', 'Erreur', 'Une erreur est survenue lors de la suppression de l\'entraînement.');
     }
   };
@@ -287,6 +283,15 @@ export default function TrainingContent({ path }: { path: string }) {
       router.replace("/login");
     }
   }, [currentUser, isLoading]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (currentUser && currentUser.id) {
+        fetchExercises();
+        fetchTrainings();
+      }
+    }, [currentUser])
+  );
 
   if (isLoading) {
     return (

@@ -12,25 +12,21 @@ export class AuthService {
   async login(loginRequest: LoginRequest): Promise<JwtResponse> {
     try {
       const response = await api.post<JwtResponse>(`${AUTH_ENDPOINT}/login`, loginRequest);
-      
-      // Stocker le token après la connexion
       if (response.data.accessToken) {
         await AsyncStorage.setItem("token", response.data.accessToken);
       }
-      
       return response.data;
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
-      
-      // Propagation explicite de l'erreur pour qu'elle soit capturée par le composant
-      throw error;
+      // Message générique, pas de détails techniques
+      throw new Error("Échec de l'authentification.");
     }
   }
+
   async signout() {
     try {
       await api.post(`${AUTH_ENDPOINT}/signout`);
     } catch (error) {
-      console.error("Erreur lors de la déconnexion côté serveur:", error);
+      // Pas d'affichage d'erreur technique côté client
     } finally {
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("refreshToken");
@@ -38,14 +34,13 @@ export class AuthService {
       router.replace("/login");
     }
   }
-  listenForTokenExpiration() {
-    AuthEvents.onTokenExpired = () => {
-      this.signout();
-    };
-  }
 
   async register(user: User): Promise<void> {
-    await api.post(`${AUTH_ENDPOINT}/register`, user);
+    try {
+      await api.post(`${AUTH_ENDPOINT}/register`, user);
+    } catch (error) {
+      throw new Error("Impossible de créer le compte. Veuillez réessayer.");
+    }
   }
 
   async validateToken(token: string): Promise<boolean> {
@@ -53,7 +48,6 @@ export class AuthService {
       const response = await api.post(`${AUTH_ENDPOINT}/validate-token`, { token });
       return response.data.isValid;
     } catch (error) {
-      console.error("Token validation failed:", error);
       return false;
     }
   }
@@ -61,14 +55,10 @@ export class AuthService {
   async getUserInfo(): Promise<User> {
     try {
       const response = await api.get<User>(`${AUTH_ENDPOINT}/user`);
-      console.log("was called");
-      // Optionnel : stocker les informations utilisateur
       await AsyncStorage.setItem("currentUser", JSON.stringify(response.data));
-      
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch user info:", error);
-      throw error;
+      throw new Error("Impossible de récupérer les informations utilisateur.");
     }
   }
 
@@ -76,8 +66,7 @@ export class AuthService {
     try {
       await api.post(`${AUTH_ENDPOINT}/lost-password`, { email });
     } catch (error) {
-      console.error("Failed to send reset password email:", error);
-      throw error;
+      throw new Error("Impossible de traiter la demande. Veuillez réessayer.");
     }
   }
 
@@ -85,8 +74,7 @@ export class AuthService {
     try {
       await api.post(`${AUTH_ENDPOINT}/is-valid-lost-password`, { token });
     } catch (error) {
-      console.error("Invalid token:", error);
-      throw error;
+      throw new Error("Lien de réinitialisation invalide ou expiré.");
     }
   }
 
@@ -94,8 +82,7 @@ export class AuthService {
     try {
       await api.post(`${AUTH_ENDPOINT}/reset-password`, { token, password });
     } catch (error) {
-      console.error("Failed to reset password:", error);
-      throw error;
+      throw new Error("Impossible de réinitialiser le mot de passe. Veuillez réessayer.");
     }
   }
 }
